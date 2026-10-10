@@ -8,11 +8,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap">
 <style>
-  /* Layout: full-screen dark "camera obscura" — the room fills the screen, controls float in a glass dock at the bottom. */
+  /* Layout: full-screen dark "camera obscura" — the room fills the screen, controls sit in a glass dock at the bottom. */
   :root {
     color-scheme: dark;
     --bg: #040507;          /* ink black, slight blue */
     --wall: #7b84d6;        /* periwinkle mirror line, as in the video */
+    --mirror: #d3d8ff;      /* placed mirrors */
+    --hole: #a77bff;        /* black hole ring */
     --light: #ffd94a;       /* lamp yellow */
     --target: #ff5a7a;      /* puzzle target */
     --ok: #6ee7a0;
@@ -50,47 +52,46 @@
   }
   .toast { bottom: 58px; white-space: normal; text-align: center; border-radius: 14px; width: max-content; line-height: 1.35; }
 
-  .perf {
-    position: absolute; left: 16px; right: 16px; top: 50%; transform: translateY(-50%); z-index: 4;
+  .card {
+    position: absolute; left: 16px; right: 16px; top: 50%; transform: translateY(-50%); z-index: 5;
     background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px;
     display: flex; flex-direction: column; gap: 12px; max-width: 26rem; margin: 0 auto;
   }
-  .perf b { font-size: 0.95rem; }
-  .perf p { margin: 0; color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
+  .card b { font-size: 0.95rem; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
+  .win { border-color: rgba(110, 231, 160, 0.45); text-align: center; gap: 10px; padding: 20px; }
+  .win .big { font-size: 1.25rem; font-weight: 700; color: var(--ok); }
+  .win .stars { font-size: 1.7rem; letter-spacing: 6px; color: var(--light); }
 
   .panel {
-    position: absolute; inset: 0; z-index: 4; background: rgba(4, 5, 7, 0.92);
-    display: flex; flex-direction: column; padding: 16px; gap: 14px; overflow-y: auto;
+    position: absolute; inset: 0; z-index: 4; background: rgba(4, 5, 7, 0.96);
+    display: flex; flex-direction: column; padding: 16px; gap: 18px; overflow-y: auto;
   }
-  .panel h2 { margin: 0; font-size: 1.15rem; }
-  .panel .sub { margin: -6px 0 0; color: var(--muted); font-size: 0.85rem; }
-  .levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+  .panel-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .panel-head h2 { margin: 0; font-size: 1.2rem; }
+  .panel-head .total { color: var(--light); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .chapter { display: flex; flex-direction: column; gap: 8px; }
+  .chapter h3 { margin: 0; font-size: 0.98rem; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .chapter h3 span { color: var(--muted); font-weight: 500; font-size: 0.8rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .chapter p { margin: -4px 0 2px; color: var(--muted); font-size: 0.8rem; line-height: 1.35; }
+  .levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px; }
   .lvl {
-    display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left;
-    background: var(--chip); border: 1px solid var(--line); border-radius: 12px; padding: 10px;
-    color: var(--fg); font: 500 0.78rem var(--font); cursor: pointer; min-height: 74px;
+    aspect-ratio: 1; max-width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    background: var(--chip); border: 1px solid var(--line); border-radius: 10px; padding: 0;
+    color: var(--fg); font: 700 0.95rem var(--font); cursor: pointer; font-variant-numeric: tabular-nums;
   }
-  .lvl .num { font-weight: 700; font-size: 1.1rem; color: var(--light); font-variant-numeric: tabular-nums; }
-  .lvl.done { border-color: rgba(110, 231, 160, 0.5); }
-  .lvl.done .num::after { content: " ✓"; color: var(--ok); }
-
-  .win {
-    position: absolute; left: 16px; right: 16px; top: 50%; transform: translateY(-50%); z-index: 5;
-    background: var(--panel); border: 1px solid rgba(110, 231, 160, 0.45); border-radius: 18px; padding: 20px;
-    display: flex; flex-direction: column; gap: 10px; max-width: 24rem; margin: 0 auto; text-align: center;
-  }
-  .win .big { font-size: 1.3rem; font-weight: 700; color: var(--ok); }
-  .win p { margin: 0; color: var(--muted); font-size: 0.88rem; }
+  .lvl .st { font-size: 0.58rem; letter-spacing: 1px; color: var(--light); min-height: 0.7rem; font-weight: 500; }
+  .lvl.done { border-color: rgba(110, 231, 160, 0.45); }
 
   .dock {
     background: var(--glass); border-top: 1px solid var(--line);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px));
   }
-  .dock section { display: flex; flex-direction: column; gap: 10px; }
+  .dock section { display: flex; flex-direction: column; gap: 9px; }
   .dock .note { margin: 0; padding: 0 16px; color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
-  .shapes { display: flex; gap: 8px; overflow-x: auto; padding: 0 16px; scrollbar-width: none; }
-  .shapes::-webkit-scrollbar { display: none; }
+  .scroller { display: flex; gap: 8px; overflow-x: auto; padding: 0 16px; scrollbar-width: none; }
+  .scroller::-webkit-scrollbar { display: none; }
   .shape {
     flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px;
     background: var(--chip); border: 1px solid transparent; border-radius: 12px;
@@ -99,14 +100,13 @@
   .shape canvas { width: 40px; height: 32px; }
   .shape[aria-pressed="true"] { border-color: var(--light); color: var(--fg); background: rgba(255, 217, 74, 0.08); }
   .shape.draw { border: 1px dashed var(--line); color: var(--fg); }
+  .tool {
+    flex: none; border: 0; background: var(--chip); color: var(--muted); border-radius: 9px;
+    padding: 8px 12px; font: 600 0.82rem var(--font); cursor: pointer;
+  }
+  .tool[aria-pressed="true"] { background: var(--light); color: #1a1500; }
 
   .row { display: flex; gap: 8px; padding: 0 16px; align-items: center; flex-wrap: wrap; }
-  .seg { display: flex; background: var(--chip); border-radius: 10px; padding: 3px; flex: 1; }
-  .seg button {
-    flex: 1; border: 0; background: transparent; color: var(--muted); border-radius: 8px;
-    padding: 8px 4px; font: 600 0.82rem var(--font); cursor: pointer;
-  }
-  .seg button[aria-pressed="true"] { background: var(--light); color: #1a1500; }
   .btn {
     border: 1px solid var(--line); background: var(--chip); color: var(--fg); border-radius: 10px;
     padding: 9px 12px; font: 600 0.82rem var(--font); cursor: pointer; white-space: nowrap;
@@ -151,7 +151,7 @@
     <div class="hint" id="hint">Нажми внутри комнаты — там появится свет</div>
     <div class="hint toast" id="toast" style="opacity:0"></div>
 
-    <div class="perf" id="perf" hidden>
+    <div class="card" id="perf" hidden>
       <b>Анимация на паузе</b>
       <p>Телефон не успевает за таким количеством лучей. Уменьши нагрузку или продолжи как есть.</p>
       <div class="row" style="padding:0">
@@ -161,14 +161,17 @@
     </div>
 
     <div class="panel" id="levelsPanel" hidden>
-      <h2>Загадки</h2>
-      <p class="sub" id="levelsSub"></p>
-      <div class="levels" id="levelGrid"></div>
-      <div class="row" style="padding:0"><button type="button" class="btn" id="levelsBack">Свободный режим</button></div>
+      <div class="panel-head">
+        <h2>Загадки</h2>
+        <span class="total" id="starsTotal"></span>
+        <button type="button" class="btn spacer" id="levelsBack">Свободный режим</button>
+      </div>
+      <div id="chapters" style="display:flex;flex-direction:column;gap:22px"></div>
     </div>
 
-    <div class="win" id="winCard" hidden>
+    <div class="card win" id="winCard" hidden>
       <div class="big" id="winTitle">Уровень пройден</div>
+      <div class="stars" id="winStars">★★★</div>
       <p id="winText"></p>
       <div class="row" style="padding:0;justify-content:center">
         <button type="button" class="btn" id="winAgain">Ещё раз</button>
@@ -179,14 +182,8 @@
 
   <div class="dock">
     <section id="dockFree">
-      <div class="shapes" id="shapes" role="toolbar" aria-label="Комнаты"></div>
-      <div class="row">
-        <div class="seg" id="modes" role="group" aria-label="Источник света">
-          <button type="button" data-mode="lamp" aria-pressed="true">Лампа</button>
-          <button type="button" data-mode="torch" aria-pressed="false">Фонарь</button>
-          <button type="button" data-mode="laser" aria-pressed="false">Лазер</button>
-        </div>
-      </div>
+      <div class="scroller" id="shapes" role="toolbar" aria-label="Комнаты"></div>
+      <div class="scroller" id="tools" role="toolbar" aria-label="Инструменты"></div>
       <div class="row">
         <button type="button" class="btn" id="clearBtn">Очистить</button>
         <button type="button" class="btn" id="autoBtn" aria-pressed="false">Авто</button>
@@ -238,7 +235,6 @@
 <script>
 (() => {
   "use strict";
-  const TAU = Math.PI * 2;
 
   // =====================================================================
   //  Telegram Mini App (подключается только внутри Telegram)
@@ -268,22 +264,28 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
   };
 
+  /*GEO-START*/
   // =====================================================================
-  //  Геометрия
+  //  Геометрия и физика света
   //  Стены — замкнутые контуры из точек ["P", x, y] и дуг эллипса ["A", cx, cy, rx, ry, t0, t1].
-  //  Дуги считаются точной формулой (не ломаной), иначе фокусы «плывут»
-  //  и в комнате Пенроуза свет пробивается туда, куда не должен.
+  //  Дуги считаются точной формулой — иначе фокусы «плывут».
+  //  Зеркала — отрезки, отражающие с обеих сторон. Чёрные дыры — круги, которые поглощают свет.
   // =====================================================================
+  const TAU = Math.PI * 2;
   const P = (x, y) => ["P", x, y];
   const A = (cx, cy, rx, ry, t0, t1) => ["A", cx, cy, rx, ry, t0, t1];
-  const rect = (cx, cy, len, wid, ang) => {
+  const polyP = (arr) => arr.map(([x, y]) => P(x, y));
+  const rectLoop = (cx, cy, len, wid, ang) => {
     const c = Math.cos(ang), s = Math.sin(ang), hl = len / 2, hw = wid / 2;
     return [[-hl, -hw], [hl, -hw], [hl, hw], [-hl, hw]].map(([x, y]) => P(cx + x * c - y * s, cy + x * s + y * c));
   };
   const curve = (n, f) => Array.from({ length: n }, (_, i) => { const [x, y] = f(TAU * i / n); return P(x, y); });
   const circle = (cx, cy, r) => [A(cx, cy, r, r, 0, TAU)];
+  const ngon = (n, r, rot) => Array.from({ length: n }, (_, i) => { const t = rot + TAU * i / n; return P(r * Math.cos(t), r * Math.sin(t)); });
+  const SQ = () => polyP([[-1, -1], [1, -1], [1, 1], [-1, 1]]);
+  const R3 = Math.sqrt(3);
 
-  const R = {
+  const ROOMS = {
     penrose() {
       const a = 1, b = 0.62, c = Math.sqrt(a * a - b * b), w = 0.42, t = 0.07, s = 0.05;
       return {
@@ -296,58 +298,57 @@
         foci: [[-w, c], [-w, -c], [w, c], [w, -c]],
       };
     },
-    ellipse: () => ({ loops: [[A(0, 0, 1, 0.62, 0, TAU)]], foci: [[-0.785, 0], [0.785, 0]] }),
+    ellipse: () => ({ loops: [[A(0, 0, 1, 0.62, 0, TAU)]], foci: [[-0.7846, 0], [0.7846, 0]] }),
+    ellipse2: () => ({ loops: [[A(0, 0, 1, 0.5, 0, TAU)]], foci: [[-0.8660, 0], [0.8660, 0]] }),
+    ellipse3: () => ({ loops: [[A(0, 0, 1, 0.75, 0, TAU)]], foci: [[-0.6614, 0], [0.6614, 0]] }),
+    ellipse4: () => ({ loops: [[A(0, 0, 1, 0.86, 0, TAU)]], foci: [[-0.5103, 0], [0.5103, 0]] }),
     stadium: () => ({ loops: [[A(0.45, 0, 0.55, 0.55, -Math.PI / 2, Math.PI / 2), A(-0.45, 0, 0.55, 0.55, Math.PI / 2, 3 * Math.PI / 2)]] }),
     astroid: () => ({ loops: [curve(600, t => [Math.cos(t) ** 3, Math.sin(t) ** 3])] }),
-    peace: () => ({ loops: [circle(0, 0, 1), rect(0, 0, 1.84, 0.08, Math.PI / 2),
-      rect(0.45 * Math.cos(-3 * Math.PI / 4), 0.45 * Math.sin(-3 * Math.PI / 4), 0.9, 0.08, -3 * Math.PI / 4),
-      rect(0.45 * Math.cos(-Math.PI / 4), 0.45 * Math.sin(-Math.PI / 4), 0.9, 0.08, -Math.PI / 4)] }),
-    w: () => ({ loops: [[[-1, 0.8], [-0.72, 0.8], [-0.5, -0.2], [-0.16, 0.8], [0.16, 0.8], [0.5, -0.2], [0.72, 0.8], [1, 0.8],
-      [0.64, -0.8], [0.36, -0.8], [0, 0.2], [-0.36, -0.8], [-0.64, -0.8]].map(([x, y]) => P(x, y))] }),
-    circle: () => ({ loops: [circle(0, 0, 1)] }),
+    peace: () => ({ loops: [circle(0, 0, 1), rectLoop(0, 0, 1.84, 0.08, Math.PI / 2),
+      rectLoop(0.45 * Math.cos(-3 * Math.PI / 4), 0.45 * Math.sin(-3 * Math.PI / 4), 0.9, 0.08, -3 * Math.PI / 4),
+      rectLoop(0.45 * Math.cos(-Math.PI / 4), 0.45 * Math.sin(-Math.PI / 4), 0.9, 0.08, -Math.PI / 4)] }),
+    w: () => ({ loops: [polyP([[-1, 0.8], [-0.72, 0.8], [-0.5, -0.2], [-0.16, 0.8], [0.16, 0.8], [0.5, -0.2], [0.72, 0.8], [1, 0.8],
+      [0.64, -0.8], [0.36, -0.8], [0, 0.2], [-0.36, -0.8], [-0.64, -0.8]])] }),
+    circle: () => ({ loops: [circle(0, 0, 1)], foci: [[0, 0]] }),
     triangle: () => ({ loops: [[90, 210, 330].map(d => P(Math.cos(d * Math.PI / 180), Math.sin(d * Math.PI / 180) - 0.15))] }),
     star: () => ({ loops: [Array.from({ length: 10 }, (_, i) => { const r = i % 2 ? 0.42 : 1, t = Math.PI / 2 + i * Math.PI / 5; return P(r * Math.cos(t), r * Math.sin(t)); })] }),
     heart: () => ({ loops: [curve(600, t => [16 * Math.sin(t) ** 3 / 17,
       (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 17 + 0.1])] }),
     donut: () => ({ loops: [circle(0, 0, 1), circle(0, 0, 0.38)] }),
-    square: () => ({ loops: [[P(-1, -1), P(1, -1), P(1, 1), P(-1, 1)]] }),
+    square: () => ({ loops: [SQ()] }),
+    rect: () => ({ loops: [polyP([[-1, -0.62], [1, -0.62], [1, 0.62], [-1, 0.62]])] }),
+    mushroom: () => ({ loops: [[P(-0.3, -1), P(0.3, -1), P(0.3, 0), A(0, 0, 1, 1, 0, Math.PI), P(-0.3, 0)]] }),
+    sinai: () => ({ loops: [SQ(), circle(0, 0, 0.4)] }),
+    parabola: () => ({ loops: [Array.from({ length: 301 }, (_, i) => { const x = -1 + 2 * i / 300; return P(x, x * x - 0.6); })], foci: [[0, -0.35]] }),
+    semicircle: () => ({ loops: [[A(0, -0.45, 1, 1, 0, Math.PI)]], foci: [[0, -0.45]] }),
+    crescent: () => ({ loops: [[A(0, 0, 1, 1, 0.8957, TAU - 0.8957), A(0.45, 0, 0.8, 0.8, -1.3504, -TAU + 1.3504)]] }),
+    binocular: () => ({ loops: [[A(-0.45, 0, 0.6, 0.6, 0.7227, TAU - 0.7227), A(0.45, 0, 0.6, 0.6, -Math.PI + 0.7227, Math.PI - 0.7227)]] }),
+    lens: () => ({ loops: [[A(-0.5, 0, 1, 1, -Math.PI / 3, Math.PI / 3), A(0.5, 0, 1, 1, 2 * Math.PI / 3, 4 * Math.PI / 3)]] }),
+    reuleaux: () => ({ loops: [[A(0, 1, R3, R3, -2 * Math.PI / 3, -Math.PI / 3), A(-R3 / 2, -0.5, R3, R3, 0, Math.PI / 3), A(R3 / 2, -0.5, R3, R3, 2 * Math.PI / 3, Math.PI)]] }),
+    cardioid: () => ({ loops: [curve(500, t => { const r = 1 - Math.cos(t); return [0.62 * r * Math.cos(t) + 0.5, 0.62 * r * Math.sin(t)]; })] }),
+    flower: () => ({ loops: [curve(600, t => { const r = 0.72 + 0.26 * Math.cos(6 * t); return [r * Math.cos(t), r * Math.sin(t)]; })] }),
+    gear: () => ({ loops: [Array.from({ length: 12 }, (_, i) => { const a = TAU * i / 12; return [[a - 0.14, 0.78], [a - 0.08, 1], [a + 0.08, 1], [a + 0.14, 0.78]]; })
+      .flat().map(([t, r]) => P(r * Math.cos(t), r * Math.sin(t)))] }),
+    cloud: () => ({ loops: [curve(600, t => { const r = 0.74 + 0.18 * Math.abs(Math.sin(3.5 * t)); return [r * Math.cos(t), 0.8 * r * Math.sin(t)]; })] }),
+    squircle: () => ({ loops: [curve(400, t => { const c = Math.cos(t), s = Math.sin(t); return [Math.sign(c) * Math.sqrt(Math.abs(c)), 0.8 * Math.sign(s) * Math.sqrt(Math.abs(s))]; })] }),
+    egg: () => ({ loops: [curve(400, t => { const y = Math.cos(t); return [0.72 * Math.sin(t) * (1 + 0.18 * y), y]; })] }),
+    drop: () => ({ loops: [curve(400, t => [0.85 * Math.sin(t) * Math.sin(t / 2), Math.cos(t)])] }),
+    hexagram: () => ({ loops: [Array.from({ length: 12 }, (_, i) => { const r = i % 2 ? 0.577 : 1, t = Math.PI / 2 + i * Math.PI / 6; return P(r * Math.cos(t), r * Math.sin(t)); })] }),
+    pentagon: () => ({ loops: [ngon(5, 1, Math.PI / 2)] }),
+    hexagon: () => ({ loops: [ngon(6, 1, 0)] }),
+    octagon: () => ({ loops: [ngon(8, 1, Math.PI / 8)] }),
+    rhombus: () => ({ loops: [polyP([[0, 1], [-0.72, 0], [0, -1], [0.72, 0]])] }),
+    cross: () => ({ loops: [polyP([[-0.34, 1], [0.34, 1], [0.34, 0.34], [1, 0.34], [1, -0.34], [0.34, -0.34], [0.34, -1], [-0.34, -1], [-0.34, -0.34], [-1, -0.34], [-1, 0.34], [-0.34, 0.34]])] }),
+    lroom: () => ({ loops: [polyP([[-1, -1], [1, -1], [1, -0.15], [-0.15, -0.15], [-0.15, 1], [-1, 1]])] }),
+    hourglass: () => ({ loops: [polyP([[-0.8, 1], [0.8, 1], [0.16, 0], [0.8, -1], [-0.8, -1], [-0.16, 0]])] }),
   };
 
-  const SHAPES = [
-    { id: "penrose", name: "Комната Пенроуза", short: "Пенроуз", light: [0, 0], build: R.penrose,
-      fact: "Где бы ни стояла лампа, часть комнаты останется в темноте. Края «грибов» стоят в фокусах эллипсов, и свет в карманы не попадает." },
-    { id: "ellipse", name: "Эллипс", short: "Эллипс", light: [-0.785, 0], build: R.ellipse,
-      fact: "Поставь лампу в фокус (точка) — все лучи соберутся во втором фокусе." },
-    { id: "stadium", name: "Стадион Бунимовича", short: "Стадион", light: [-0.3, 0.2], build: R.stadium,
-      fact: "Хаотичный бильярд: даже лазер со временем заполняет всю комнату." },
-    { id: "astroid", name: "Астроида", short: "Астроида", light: [0, 0.5], build: R.astroid,
-      fact: "Вогнутые зеркала и острые углы. Поставь лампу у самого острия — получится как на видео." },
-    { id: "peace", name: "Пацифик", short: "Пацифик", light: [-0.5, 0.4], build: R.peace,
-      fact: "Перегородки не доходят до края: свет просачивается через узкие щели." },
-    { id: "w", name: "Буква W", short: "W", light: [-0.86, 0.6], build: R.w,
-      fact: "Свет долго путается в острых углах, прежде чем добраться до другого конца." },
-    { id: "circle", name: "Круг", short: "Круг", light: [0.55, 0.15], build: R.circle,
-      fact: "Лучи рисуют каустику — яркие кривые, как блик на дне чашки." },
-    { id: "triangle", name: "Треугольник", short: "Треугольник", light: [0, -0.1], build: R.triangle,
-      fact: "Здесь есть замкнутый маршрут — треугольник Фаньяно. Попробуй найти его лазером." },
-    { id: "star", name: "Звезда", short: "Звезда", light: [0, 0], build: R.star,
-      fact: "Каждый луч звезды — ловушка: свет заходит и долго бьётся внутри." },
-    { id: "heart", name: "Сердце", short: "Сердце", light: [0, 0.1], build: R.heart,
-      fact: "Ямка сверху работает как вогнутое зеркало и собирает свет." },
-    { id: "donut", name: "Бублик", short: "Бублик", light: [-0.7, 0], build: R.donut,
-      fact: "Колонна в центре отбрасывает тень, но отражения обходят её." },
-    { id: "square", name: "Квадрат", short: "Квадрат", light: [-0.4, -0.3], build: R.square,
-      fact: "Лучи ходят по повторяющимся маршрутам. Пусти лазер под разными углами." },
-  ];
-
-  // Превращаем контуры в ломаные (для рисования и «внутри/снаружи»), отрезки и дуги (для физики)
+  // Контуры → ломаные (рисование, «внутри/снаружи»), отрезки и дуги (физика)
   const arcStart = (e) => [e[1] + e[3] * Math.cos(e[5]), e[2] + e[4] * Math.sin(e[5])];
   const arcEnd = (e) => [e[1] + e[3] * Math.cos(e[6]), e[2] + e[4] * Math.sin(e[6])];
-  function prepare(sh) {
-    const g = sh.build();
-    sh.foci = g.foci || [];
+  function prepareLoops(loops, foci) {
     const segs = [], arcs = [], polys = [];
-    for (const loop of g.loops) {
+    for (const loop of loops) {
       const poly = [], n = loop.length;
       const addSeg = (a, b) => {
         const ex = b[0] - a[0], ey = b[1] - a[1], L = Math.hypot(ex, ey);
@@ -356,40 +357,62 @@
       for (let i = 0; i < n; i++) {
         const e = loop[i], next = loop[(i + 1) % n];
         const endPt = e[0] === "P" ? [e[1], e[2]] : arcEnd(e);
+        let full = false;
         if (e[0] === "P") poly.push([e[1], e[2]]);
         else {
           const lo = Math.min(e[5], e[6]), hi = Math.max(e[5], e[6]), steps = Math.max(24, Math.round((hi - lo) / TAU * 360));
+          full = hi - lo >= TAU - 1e-9;
           for (let k = 0; k <= steps; k++) { const t = e[5] + (e[6] - e[5]) * k / steps; poly.push([e[1] + e[3] * Math.cos(t), e[2] + e[4] * Math.sin(t)]); }
-          arcs.push({ cx: e[1], cy: e[2], rx: e[3], ry: e[4], lo, hi, full: hi - lo >= TAU - 1e-9 });
+          arcs.push({ cx: e[1], cy: e[2], rx: e[3], ry: e[4], lo, hi, full });
         }
-        if (!(n === 1 && e[0] === "A")) addSeg(endPt, next[0] === "P" ? [next[1], next[2]] : arcStart(next));
+        if (!(n === 1 && full)) addSeg(endPt, next[0] === "P" ? [next[1], next[2]] : arcStart(next));
       }
       polys.push(poly);
     }
-    sh.outer = polys[0] || []; sh.holes = polys.slice(1); sh.loops = polys;
-    sh.segs = new Float64Array(segs); sh.arcs = arcs;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    for (const [x, y] of sh.outer) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
-    sh.box = sh.outer.length ? [x0, y0, x1, y1] : [-1, -1, 1, 1];
-    sh.grid = null;
-    return sh;
+    for (const [x, y] of polys[0] || []) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+    const base = { outer: polys[0] || [], holes: polys.slice(1), loops: polys, baseSegs: segs, baseArcs: arcs,
+      box: polys[0] && polys[0].length ? [x0, y0, x1, y1] : [-1, -1, 1, 1], foci: foci || [] };
+    return compose(base, [], []);
   }
-  SHAPES.forEach(prepare);
+  // Добавляет к комнате зеркала [x1,y1,x2,y2] и чёрные дыры [x,y,r]
+  function compose(base, mirrors, absorbers) {
+    const segs = base.baseSegs.slice();
+    for (const [x1, y1, x2, y2] of mirrors) {
+      const ex = x2 - x1, ey = y2 - y1, L = Math.hypot(ex, ey);
+      if (L > 1e-9) segs.push(x1, y1, ex, ey, -ey / L, ex / L);
+    }
+    const arcs = base.baseArcs.concat(absorbers.map(([x, y, r]) => ({ cx: x, cy: y, rx: r, ry: r, lo: 0, hi: TAU, full: true, absorb: true })));
+    return Object.assign({}, base, { segs: new Float64Array(segs), arcs, mirrors: mirrors.map(m => m.slice()), absorbers: absorbers.map(a => a.slice()), grid: null });
+  }
+  function makeRoom(id, ex) {
+    ex = ex || {};
+    const g = ROOMS[id]();
+    const loops = g.loops.concat((ex.holes || []).map(h => rectLoop(h[0], h[1], h[2], h[3], h[4])));
+    const s = prepareLoops(loops, g.foci);
+    s.roomId = id;
+    return compose(s, ex.mir || [], ex.abs || []);
+  }
 
   function inPoly(x, y, p) {
     let ins = false;
     for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
-      const [xi, yi] = p[i], [xj, yj] = p[j];
+      const xi = p[i][0], yi = p[i][1], xj = p[j][0], yj = p[j][1];
       if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) ins = !ins;
     }
     return ins;
   }
-  const inside = (s, x, y) => s.outer.length > 2 && inPoly(x, y, s.outer) && !s.holes.some(h => inPoly(x, y, h));
+  function inside(s, x, y) {
+    if (s.outer.length < 3 || !inPoly(x, y, s.outer)) return false;
+    for (const h of s.holes) if (inPoly(x, y, h)) return false;
+    for (const a of s.absorbers) if (Math.hypot(x - a[0], y - a[1]) < a[2]) return false;
+    return true;
+  }
 
-  // Ближайшая стена по направлению луча: расстояние и нормаль в точке удара
-  const HIT = { t: 0, nx: 0, ny: 0 };
+  // Ближайшая преграда по направлению луча: расстояние, нормаль и «поглощает ли»
+  const HIT = { t: 0, nx: 0, ny: 0, absorb: false };
   function castRay(s, px, py, dx, dy) {
-    const g = s.segs; let best = Infinity, bnx = 0, bny = 0;
+    const g = s.segs; let best = Infinity, bnx = 0, bny = 0, bab = false;
     for (let k = 0; k < g.length; k += 6) {
       const ex = g[k + 2], ey = g[k + 3];
       const den = dx * ey - dy * ex;
@@ -399,7 +422,7 @@
       if (t <= 1e-7 || t >= best) continue;
       const u = (wx * dy - wy * dx) / den;
       if (u < 0 || u > 1) continue;
-      best = t; bnx = g[k + 4]; bny = g[k + 5];
+      best = t; bnx = g[k + 4]; bny = g[k + 5]; bab = false;
     }
     for (const e of s.arcs) {
       const X = (px - e.cx) / e.rx, Y = (py - e.cy) / e.ry, DX = dx / e.rx, DY = dy / e.ry;
@@ -417,22 +440,23 @@
           if (th > e.hi + 1e-12) continue;
         }
         const nx = hx / e.rx, ny = hy / e.ry, L = Math.hypot(nx, ny);
-        best = t; bnx = nx / L; bny = ny / L;
+        best = t; bnx = nx / L; bny = ny / L; bab = !!e.absorb;
         break;
       }
     }
     if (best === Infinity) return null;
-    HIT.t = best; HIT.nx = bnx; HIT.ny = bny;
+    HIT.t = best; HIT.nx = bnx; HIT.ny = bny; HIT.absorb = bab;
     return HIT;
   }
 
-  // Весь путь луча сразу (для загадок): [x0,y0, x1,y1, ...]; отрезок j идёт после j отражений
+  // Путь луча целиком: [x0,y0, x1,y1, ...]; отрезок j идёт после j отражений. Чёрная дыра обрывает путь.
   function tracePath(s, x, y, dx, dy, maxB) {
     const pts = [x, y];
     for (let b = 0; b <= maxB; b++) {
       const h = castRay(s, x, y, dx, dy);
       if (!h) break;
       x += dx * h.t; y += dy * h.t; pts.push(x, y);
+      if (h.absorb) break;
       const d = dx * h.nx + dy * h.ny; dx -= 2 * d * h.nx; dy -= 2 * d * h.ny;
     }
     return pts;
@@ -446,6 +470,41 @@
     if (disc < 0 || a === 0) return -1;
     const t = (-b - Math.sqrt(disc)) / (2 * a);
     return t >= 0 && t <= 1 ? t : -1;
+  }
+  // Выстрел лазером: попадает ли во все мишени, учитываются попадания после ≥ minB отражений
+  function laserResult(s, sx, sy, ang, targets, minB, maxB) {
+    const pts = tracePath(s, sx, sy, Math.cos(ang), Math.sin(ang), maxB);
+    const hit = targets.map(() => false);
+    let left = targets.length, dist = 0, at = -1, early = false;
+    for (let j = 0, seg = 0; j + 3 < pts.length; j += 2, seg++) {
+      const L = Math.hypot(pts[j + 2] - pts[j], pts[j + 3] - pts[j + 1]);
+      const ev = [];
+      targets.forEach((t, i) => { if (!hit[i]) { const u = segCircle(pts[j], pts[j + 1], pts[j + 2], pts[j + 3], t[0], t[1], t[2]); if (u >= 0) ev.push([u, i]); } });
+      ev.sort((a, b) => a[0] - b[0]);
+      for (const [u, i] of ev) {
+        if (seg >= minB) { hit[i] = true; if (--left === 0) { at = dist + u * L; break; } }
+        else early = true;
+      }
+      if (at >= 0) break;
+      dist += L;
+    }
+    return { win: at >= 0, at, total: dist, early, hits: targets.length - left, pts };
+  }
+  function clearance(s, x, y) {
+    let m = Infinity;
+    for (let i = 0; i < 24; i++) { const a = TAU * i / 24, h = castRay(s, x, y, Math.cos(a), Math.sin(a)); m = Math.min(m, h ? h.t : 0); }
+    return m;
+  }
+  function segmentClear(s, ax, ay, bx, by) {
+    if (!inside(s, ax, ay) || !inside(s, bx, by)) return false;
+    const L = Math.hypot(bx - ax, by - ay); if (L < 1e-9) return false;
+    const h = castRay(s, ax, ay, (bx - ax) / L, (by - ay) / L);
+    return !h || h.t >= L - 1e-9;
+  }
+  function pointSegDist(px, py, ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
+    const t = L2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L2)) : 0;
+    return Math.hypot(px - ax - dx * t, py - ay - dy * t);
   }
   // Сколько комнаты освещено: сетка клеток, по которым прошли лучи
   function buildGrid(s, N) {
@@ -477,7 +536,7 @@
     let cnt = 0; for (let i = 0; i < G.n; i++) cnt += lit[i];
     return { pct: G.n ? cnt * 100 / G.n : 0, lit, G };
   }
-  // Какая доля лучей лампы попадает в мишень за первые 2 отрезка (прямо или после 1 отражения)
+  // Доля лучей лампы, попавших в мишень сразу или после одного отражения
   function focusShare(s, lx, ly, tx, ty, tr, rays) {
     let ok = 0;
     for (let i = 0; i < rays; i++) {
@@ -486,41 +545,63 @@
     }
     return ok * 100 / rays;
   }
+  /*GEO-END*/
 
   // =====================================================================
-  //  Загадки
+  //  Каталог комнат свободного режима
   // =====================================================================
-  const SQ = [P(-1, -1), P(1, -1), P(1, 1), P(-1, 1)];
-  const starTip = (k, r) => [r * Math.cos(Math.PI / 2 + k * 2 * Math.PI / 5), r * Math.sin(Math.PI / 2 + k * 2 * Math.PI / 5)];
-  const LEVELS = [
-    { name: "Первый выстрел", kind: "laser", room: R.square, src: [-0.75, -0.75], target: [0.7, 0.7, 0.1], minB: 0, maxB: 0,
-      task: "Попади лазером в мишень. Нажми и потяни — луч полетит в сторону пальца." },
-    { name: "Через стену", kind: "laser", room: () => ({ loops: [SQ, rect(0, 0.22, 1.5, 0.08, Math.PI / 2)] }),
-      src: [-0.7, 0.5], target: [0.7, 0.5, 0.1], minB: 0, maxB: 1,
-      task: "Мишень за стеной. Отрази луч от зеркала и обойди стену." },
-    { name: "Три рикошета", kind: "laser", room: R.circle, src: [-0.6, 0], target: [0.6, 0, 0.08], minB: 3, maxB: 3,
-      task: "Попади в мишень ровно после трёх отражений от стены." },
-    { name: "Фокус", kind: "focus", room: R.ellipse, target: [0.785, 0, 0.1], lamps: 1, need: 55,
-      task: "Поставь лампу так, чтобы почти весь свет собрался в мишени. Считаются лучи, попавшие сразу или после одного отражения." },
-    { name: "Колонна", kind: "laser", room: R.donut, src: [-0.7, 0], target: [0.7, 0, 0.08], minB: 0, maxB: 1,
-      task: "Колонна закрывает мишень. Попади с одного отражения." },
-    { name: "Тёмные углы", kind: "cover", room: () => ({ loops: [SQ, circle(-0.45, 0.45, 0.2), circle(0.45, -0.45, 0.2), circle(0.5, 0.5, 0.12)] }),
-      lamps: 1, maxB: 1, need: 98, task: "Одной лампой освети 98% комнаты. Лучи отражаются только один раз." },
-    { name: "Зигзаг", kind: "laser", room: R.w, src: [-0.86, 0.6], target: [0.86, 0.6, 0.09], minB: 0, maxB: 8,
-      task: "Проведи луч через всю букву W — от левого края до правого. Не больше 8 отражений." },
-    { name: "Звёздный тупик", kind: "laser", room: R.star, src: starTip(0, 0.8), target: [...starTip(2, 0.8), 0.07], minB: 1, maxB: 2,
-      task: "Из верхнего луча звезды попади в нижний левый: одно или два отражения." },
-    { name: "Без тени", kind: "cover", room: R.donut, lamps: 1, maxB: 1, need: 98,
-      task: "Освети 98% бублика одной лампой, чтобы за колонной почти не осталось тени. Лучи отражаются один раз." },
-    { name: "Сердце", kind: "laser", room: R.heart, src: [0, -0.6], target: [-0.5, 0.42, 0.07], minB: 1, maxB: 1,
-      task: "Из нижнего кончика попади в левую половинку сердца ровно с одного отражения." },
-    { name: "Лабиринт", kind: "laser", room: () => ({ loops: [SQ, rect(-0.33, 0.25, 1.4, 0.07, Math.PI / 2), rect(0.33, -0.25, 1.4, 0.07, Math.PI / 2)] }),
-      src: [-0.75, 0.7], target: [0.75, -0.7, 0.1], minB: 0, maxB: 6,
-      task: "Проведи луч змейкой между двумя стенами в дальний угол. Не больше 6 отражений." },
-    { name: "Загадка Пенроуза", kind: "cover", room: R.penrose, lamps: 2, maxB: 40, need: 99.5,
-      task: "Одной лампой эту комнату не осветить. Поставь две так, чтобы не осталось тёмных мест." },
+  const CATALOG = [
+    ["penrose", "Комната Пенроуза", "Пенроуз", [0, 0], "Где бы ни стояла лампа, часть комнаты останется в темноте. Края «грибов» стоят в фокусах эллипсов, и свет в карманы не попадает."],
+    ["ellipse", "Эллипс", "Эллипс", [-0.7846, 0], "Поставь лампу в фокус (точка) — все лучи соберутся во втором фокусе."],
+    ["parabola", "Парабола", "Парабола", [0, 0.2], "Выбери «Полосу» и пусти лучи сверху вниз — параболическое зеркало соберёт их в фокусе."],
+    ["stadium", "Стадион Бунимовича", "Стадион", [-0.3, 0.2], "Хаотичный бильярд: даже лазер со временем заполняет всю комнату."],
+    ["mushroom", "Гриб Бунимовича", "Гриб", [0.5, 0.3], "В шляпке часть лучей вечно кружит по краю, а другие хаотично блуждают и проваливаются в ножку."],
+    ["sinai", "Бильярд Синая", "Синай", [-0.7, 0.6], "Круглая колонна делает движение хаотичным — классика теории хаоса."],
+    ["astroid", "Астроида", "Астроида", [0, 0.5], "Вогнутые зеркала и острые углы. Поставь лампу у самого острия — получится как на видео."],
+    ["peace", "Пацифик", "Пацифик", [-0.5, 0.4], "Перегородки не доходят до края: свет просачивается через узкие щели."],
+    ["w", "Буква W", "W", [-0.86, 0.6], "Свет долго путается в острых углах, прежде чем добраться до другого конца."],
+    ["circle", "Круг", "Круг", [0.55, 0.15], "Лучи рисуют каустику — яркие кривые, как блик на дне чашки."],
+    ["semicircle", "Полукруг", "Полукруг", [0, -0.45], "Лампа в центре прямой стены: свет возвращается ровно в ту же точку."],
+    ["crescent", "Полумесяц", "Полумесяц", [-0.75, 0.05], "Свет скользит вдоль вогнутой стены и собирается у острых рогов."],
+    ["binocular", "Бинокль", "Бинокль", [-0.5, 0], "Две круглые комнаты с узкими «губами» между ними."],
+    ["lens", "Линза", "Линза", [0, 0], "Две дуги и два острых угла — свет запирается в кончиках."],
+    ["reuleaux", "Треугольник Рёло", "Рёло", [0, 0], "Фигура постоянной ширины — как крышка люка, которая не провалится."],
+    ["triangle", "Треугольник", "Треугольник", [0, -0.1], "Здесь есть замкнутый маршрут — треугольник Фаньяно. Попробуй найти его лазером."],
+    ["square", "Квадрат", "Квадрат", [-0.4, -0.3], "Лучи ходят по повторяющимся маршрутам. Пусти лазер под разными углами."],
+    ["hexagon", "Шестиугольник", "6 углов", [-0.3, 0.2], "Пчелиные соты из зеркал: узоры повторяются шесть раз."],
+    ["octagon", "Восьмиугольник", "8 углов", [0.3, 0.1], "Почти круг, но с гранями — посмотри, как ломается каустика."],
+    ["pentagon", "Пятиугольник", "5 углов", [0, 0.1], "Пять граней дают узоры, которые не складываются в сетку."],
+    ["star", "Звезда", "Звезда", [0, 0], "Каждый луч звезды — ловушка: свет заходит и долго бьётся внутри."],
+    ["hexagram", "Шестиконечная звезда", "6 лучей", [0, 0], "Шесть ловушек вокруг светлого шестиугольника."],
+    ["heart", "Сердце", "Сердце", [0, 0.1], "Ямка сверху работает как вогнутое зеркало и собирает свет."],
+    ["cardioid", "Кардиоида", "Кардиоида", [-0.2, 0], "Острый «клюв» ловит свет, а вогнутая стена рисует яркую кривую."],
+    ["flower", "Цветок", "Цветок", [0, 0], "Шесть лепестков-зеркал: каждый фокусирует свет по-своему."],
+    ["gear", "Шестерёнка", "Шестерёнка", [0, 0], "Зубцы разбрасывают свет во все стороны."],
+    ["cloud", "Облако", "Облако", [0, 0], "Острые впадины между «пузырями» делят свет на потоки."],
+    ["squircle", "Скруглённый квадрат", "Скруглён.", [-0.3, 0.2], "Не квадрат и не круг — каустики получаются мягкими."],
+    ["egg", "Яйцо", "Яйцо", [0, 0.3], "Несимметричный эллипс: фокусы есть, но не точные."],
+    ["drop", "Капля", "Капля", [0, -0.4], "Острый кончик сверху собирает лучи, как воронка."],
+    ["donut", "Бублик", "Бублик", [-0.7, 0], "Колонна в центре отбрасывает тень, но отражения обходят её."],
+    ["rhombus", "Ромб", "Ромб", [0, 0.2], "Два острых угла и два тупых — свет тянется к острым."],
+    ["cross", "Крест", "Крест", [0, 0], "Из центра видны все четыре коридора, а из коридора — нет."],
+    ["lroom", "Комната-уголок", "Уголок", [-0.6, -0.6], "Г-образная комната: попробуй осветить её одной лампой."],
+    ["hourglass", "Песочные часы", "Часы", [0, 0.6], "Узкая талия пропускает лишь часть света вниз."],
+  ].map(([id, name, short, light, fact]) => ({ id, name, short, light, fact }));
+  const ROOM_NAMES = Object.fromEntries(CATALOG.map(c => [c.id, c.name]));
+  Object.assign(ROOM_NAMES, { rect: "Прямоугольник", ellipse2: "Вытянутый эллипс", ellipse3: "Овал", ellipse4: "Почти круг" });
+
+  // =====================================================================
+  //  Уровни (сгенерированы и проверены заранее: у каждого есть решение)
+  // =====================================================================
+  const CHAPTERS = [
+    { name: "Первые лучи", sub: "Лазер, мишень и пара отражений." },
+    { name: "Рикошеты", sub: "Нужное число отражений и несколько мишеней одним выстрелом." },
+    { name: "Свет и тень", sub: "Освети комнату или собери свет в одной точке." },
+    { name: "Чёрные дыры", sub: "Дыры поглощают свет, стены мешают. Найди обход." },
+    { name: "Зеркальщик", sub: "Лазер закреплён. Нарисуй зеркало, чтобы направить луч." },
+    { name: "Мастер", sub: "Всё вместе и намного сложнее. Последний уровень — загадка Пенроуза." },
   ];
-  LEVELS.forEach((L, i) => { L.shape = prepare({ id: "lvl" + i, name: L.name, short: "", fact: L.task, light: [0, 0], build: L.room }); });
+  const LEVEL_DATA = /*LEVELS*/[{"c":0,"k":"laser","room":"circle","src":[-0.5266,-0.3114],"t":[[0.4041,-0.4439,0.0892]],"minB":0,"maxB":1},{"c":0,"k":"laser","room":"octagon","src":[0.1463,0.2052],"t":[[-0.0769,-0.2626,0.0926]],"minB":0,"maxB":1},{"c":0,"k":"laser","room":"stadium","src":[-0.0884,-0.2536],"t":[[-0.7876,-0.0447,0.0766]],"minB":0,"maxB":1},{"c":0,"k":"laser","room":"square","src":[-0.6738,0.8963],"t":[[0.0416,0.3721,0.0877]],"minB":0,"maxB":2},{"c":0,"k":"laser","room":"rhombus","src":[0.3485,0.2232],"t":[[0.3138,-0.2485,0.0884]],"minB":2,"maxB":2},{"c":0,"k":"laser","room":"square","src":[0.3644,0.6524],"t":[[-0.0554,0.3591,0.0901]],"minB":0,"maxB":1},{"c":0,"k":"laser","room":"circle","src":[-0.7426,-0.1479],"t":[[-0.0459,-0.0715,0.0754]],"minB":2,"maxB":4},{"c":0,"k":"laser","room":"octagon","src":[0.3406,-0.6819],"t":[[-0.2715,0.0308,0.0851]],"minB":1,"maxB":1},{"c":0,"k":"laser","room":"circle","src":[0.6273,0.4731],"t":[[0.0855,0.1704,0.0909]],"minB":0,"maxB":1},{"c":0,"k":"laser","room":"pentagon","src":[0.7778,0.2851],"t":[[-0.2127,-0.1179,0.0814]],"minB":0,"maxB":1},{"c":0,"k":"laser","room":"square","src":[0.4349,0.6313],"t":[[0.6971,-0.3293,0.0855]],"minB":0,"maxB":1},{"c":0,"k":"laser","room":"rect","src":[0.5723,0.506],"t":[[-0.0727,-0.0717,0.0921]],"minB":1,"maxB":1},{"c":0,"k":"laser","room":"circle","src":[-0.85,0.1009],"t":[[-0.2706,-0.6266,0.0938]],"minB":1,"maxB":1},{"c":0,"k":"laser","room":"rect","src":[0.3855,-0.0569],"t":[[0.0394,-0.3985,0.095]],"minB":0,"maxB":0},{"c":0,"k":"laser","room":"circle","src":[-0.4392,-0.1173],"t":[[-0.7579,0.2481,0.0883]],"minB":0,"maxB":0},{"c":0,"k":"laser","room":"hexagon","src":[0.761,-0.0635],"t":[[0.2197,-0.218,0.0954]],"minB":0,"maxB":0},{"c":0,"k":"laser","room":"lroom","src":[0.2953,-0.6907],"t":[[-0.7822,-0.1883,0.0923]],"minB":2,"maxB":2},{"c":0,"k":"laser","room":"triangle","src":[0.0712,-0.1132],"t":[[-0.4214,-0.4708,0.0952]],"minB":0,"maxB":0},{"c":0,"k":"laser","room":"hexagon","src":[-0.0793,-0.47],"t":[[0.3072,-0.1875,0.0716]],"minB":0,"maxB":0},{"c":0,"k":"laser","room":"pentagon","src":[-0.0387,0.5499],"t":[[-0.3145,-0.0341,0.0945]],"minB":0,"maxB":0},{"c":1,"k":"laser","room":"octagon","src":[-0.4326,-0.2814],"t":[[-0.5221,0.5316,0.0781],[0.2843,-0.5827,0.0897]],"minB":0,"maxB":4},{"c":1,"k":"laser","room":"star","src":[0.0703,0.5251],"t":[[-0.0322,-0.1134,0.0835]],"minB":3,"maxB":3},{"c":1,"k":"laser","room":"lroom","src":[-0.6475,-0.3462],"t":[[-0.6237,0.6339,0.0929]],"minB":2,"maxB":2},{"c":1,"k":"laser","room":"hexagram","src":[0.1707,-0.2678],"t":[[-0.2118,0.0764,0.0906]],"minB":2,"maxB":2},{"c":1,"k":"laser","room":"circle","src":[-0.7507,0.1866],"t":[[0.1655,-0.5947,0.0946]],"minB":2,"maxB":2},{"c":1,"k":"laser","room":"ellipse","src":[-0.0741,-0.2803],"t":[[-0.5362,0.187,0.08],[0.3582,0.0167,0.0995]],"minB":0,"maxB":2},{"c":1,"k":"laser","room":"gear","src":[0.2356,-0.5346],"t":[[0.234,-0.0553,0.0948]],"minB":3,"maxB":3},{"c":1,"k":"laser","room":"w","src":[0.5485,-0.3372],"t":[[0.1449,0.2306,0.0822]],"minB":3,"maxB":3},{"c":1,"k":"laser","room":"ellipse","src":[0.3394,0.2646],"t":[[-0.1208,-0.0607,0.077],[-0.6389,0.0116,0.0771]],"minB":0,"maxB":2},{"c":1,"k":"laser","room":"stadium","src":[-0.4121,0.0949],"t":[[0.6627,-0.2438,0.0801],[0.1428,-0.0745,0.0883]],"minB":0,"maxB":2},{"c":1,"k":"laser","room":"w","src":[-0.3312,-0.1106],"t":[[0.0617,0.3418,0.0932]],"minB":2,"maxB":2},{"c":1,"k":"laser","room":"pentagon","src":[0.6128,0.4273],"t":[[0.1467,-0.0403,0.0735],[-0.2324,-0.2568,0.0877]],"minB":0,"maxB":3},{"c":1,"k":"laser","room":"cross","src":[-0.8361,0.0847],"t":[[-0.2793,-0.0447,0.0714],[0.3797,-0.1942,0.086]],"minB":0,"maxB":3},{"c":1,"k":"laser","room":"square","src":[-0.7089,-0.7944],"t":[[0.8543,0.3756,0.09]],"minB":4,"maxB":4},{"c":1,"k":"laser","room":"reuleaux","src":[-0.5471,-0.4857],"t":[[0.1603,0.0694,0.0926]],"minB":4,"maxB":4},{"c":1,"k":"laser","room":"square","src":[0.8376,0.1705],"t":[[0.3951,0.5211,0.0844],[-0.1964,-0.2634,0.0899]],"minB":0,"maxB":4},{"c":1,"k":"laser","room":"lroom","src":[-0.7713,0.3915],"t":[[0.0468,-0.5059,0.0723]],"minB":2,"maxB":2},{"c":1,"k":"laser","room":"square","src":[0.5852,0.6741],"t":[[-0.3142,-0.2531,0.0798]],"minB":3,"maxB":3},{"c":1,"k":"laser","room":"hexagon","src":[0.0957,-0.678],"t":[[-0.3263,0.1041,0.099],[0.0793,0.6736,0.0823],[0.2465,0.1111,0.0896]],"minB":0,"maxB":3},{"c":1,"k":"laser","room":"square","src":[0.6452,-0.6627],"t":[[0.699,0.1917,0.0799],[-0.5059,0.2386,0.0954],[-0.7776,-0.6948,0.0887]],"minB":0,"maxB":3},{"c":2,"k":"cover","room":"donut","lamps":1,"maxB":1,"need":98},{"c":2,"k":"cover","room":"flower","lamps":1,"maxB":1,"need":99.5},{"c":2,"k":"cover","room":"sinai","lamps":1,"maxB":2,"need":99.5},{"c":2,"k":"cover","room":"cross","lamps":1,"maxB":0,"need":99.5},{"c":2,"k":"cover","room":"lroom","lamps":1,"maxB":0,"need":99.5},{"c":2,"k":"cover","room":"gear","lamps":1,"maxB":0,"need":99.5},{"c":2,"k":"cover","room":"rect","holes":[[-0.4517,0.2201,0.6119,0.07,1.5708],[0.09,0.1783,0.7273,0.07,0]],"lamps":1,"maxB":1,"need":93.5},{"c":2,"k":"cover","room":"crescent","lamps":1,"maxB":1,"need":99.5},{"c":2,"k":"cover","room":"hourglass","lamps":1,"maxB":0,"need":88},{"c":2,"k":"cover","room":"circle","holes":[[0.2131,0.1489,0.5843,0.07,0.7905],[-0.0013,0.5473,0.5389,0.07,0.3591],[0.6683,0.2485,0.4576,0.07,1.5708]],"lamps":2,"maxB":0,"need":94.5},{"c":2,"k":"cover","room":"square","holes":[[-0.4678,0.0228,0.7573,0.07,1.7204],[0.2043,-0.6414,0.7757,0.07,2.7292]],"lamps":1,"maxB":1,"need":94.5},{"c":2,"k":"cover","room":"octagon","holes":[[-0.4311,0.5026,0.3585,0.07,1.6939],[0.0854,0.0335,0.7191,0.07,0.3322],[-0.0385,-0.3406,0.6025,0.07,0]],"lamps":2,"maxB":0,"need":92},{"c":2,"k":"cover","room":"hexagon","holes":[[0.3511,0.2978,0.417,0.07,1.6772],[-0.2321,0.3194,0.623,0.07,0]],"lamps":1,"maxB":1,"need":99},{"c":2,"k":"cover","room":"octagon","holes":[[-0.0961,-0.1125,0.6214,0.07,2.4085],[0.1452,0.2069,0.4418,0.07,1.5708]],"lamps":1,"maxB":0,"need":77},{"c":2,"k":"cover","room":"square","holes":[[0.2482,0.3602,0.6787,0.07,1.5708],[-0.1558,-0.5931,0.3733,0.07,0],[-0.7242,0.2024,0.5569,0.07,1.7121]],"lamps":2,"maxB":0,"need":96.5},{"c":2,"k":"focus","room":"ellipse2","t":[[-0.866,0,0.12]],"need":30},{"c":2,"k":"focus","room":"ellipse3","abs":[[0,0,0.08]],"t":[[-0.6614,0,0.12]],"need":40},{"c":2,"k":"focus","room":"ellipse","t":[[0.7846,0,0.12]],"need":40},{"c":2,"k":"focus","room":"ellipse3","t":[[0.6614,0,0.12]],"need":50},{"c":2,"k":"focus","room":"ellipse4","t":[[-0.5103,0,0.12]],"need":75},{"c":3,"k":"laser","room":"ellipse3","abs":[[-0.1476,-0.3959,0.1125],[0.0248,-0.1511,0.1219]],"src":[0.1719,-0.4036],"t":[[-0.5856,-0.2694,0.0848]],"minB":0,"maxB":2},{"c":3,"k":"laser","room":"rect","abs":[[-0.4351,-0.2061,0.1487],[-0.8196,-0.0422,0.0797]],"src":[-0.8277,-0.4152],"t":[[-0.597,0.2043,0.0712]],"minB":0,"maxB":2},{"c":3,"k":"laser","room":"circle","abs":[[0.4534,0.4374,0.0815],[0.5745,0.1925,0.0789]],"src":[0.4693,0.6917],"t":[[0.6001,-0.1802,0.0917]],"minB":0,"maxB":2},{"c":3,"k":"laser","room":"hexagon","holes":[[0.3581,0.0375,0.5153,0.07,1.5708]],"abs":[[-0.2282,-0.262,0.1465],[-0.2655,0.169,0.1271],[-0.044,-0.5439,0.1414]],"src":[-0.3,-0.7318],"t":[[-0.1801,0.502,0.0868]],"minB":0,"maxB":2},{"c":3,"k":"laser","room":"square","holes":[[0.3679,-0.6383,0.4492,0.07,2.2333]],"abs":[[0.1362,-0.1158,0.1335],[0.424,0.2254,0.1078],[-0.0719,-0.5648,0.1469]],"src":[-0.405,-0.5639],"t":[[0.7274,0.5682,0.08]],"minB":0,"maxB":5},{"c":3,"k":"laser","room":"octagon","abs":[[-0.2585,0.0384,0.0957],[0.06,0.0532,0.1041]],"src":[0.1023,0.3023],"t":[[-0.5036,-0.1001,0.0819]],"minB":0,"maxB":1},{"c":3,"k":"laser","room":"square","holes":[[0.3456,0.1994,0.3814,0.07,0.5856]],"abs":[[-0.0082,-0.2391,0.1409],[-0.1335,0.3438,0.1305],[0.2277,-0.4994,0.0873]],"src":[0.3037,-0.7102],"t":[[-0.4505,0.6314,0.0974]],"minB":0,"maxB":4},{"c":3,"k":"laser","room":"ellipse4","holes":[[0.1702,0.3294,0.6131,0.07,1.2262]],"abs":[[0.4961,0.1232,0.1348],[0.136,-0.32,0.1312],[0.4293,-0.3727,0.0961]],"src":[0.3704,-0.1404],"t":[[0.5355,0.5184,0.0928]],"minB":0,"maxB":3},{"c":3,"k":"laser","room":"square","abs":[[-0.3977,-0.2538,0.088],[-0.5821,-0.0222,0.1373]],"src":[-0.2586,0.012],"t":[[-0.5533,-0.4949,0.0966]],"minB":0,"maxB":3},{"c":3,"k":"laser","room":"squircle","abs":[[-0.4145,-0.1042,0.0911]],"src":[0.5421,-0.6382],"t":[[-0.7141,0.0252,0.0858]],"minB":0,"maxB":1},{"c":3,"k":"laser","room":"square","holes":[[0.484,-0.1543,0.6856,0.07,2.7889]],"abs":[[0.0368,-0.5296,0.1475],[0.46,-0.7623,0.1441],[0.1509,-0.839,0.0806]],"src":[0.8051,-0.8471],"t":[[-0.412,-0.3319,0.0837]],"minB":0,"maxB":3},{"c":3,"k":"laser","room":"rect","holes":[[-0.5252,-0.2147,0.4323,0.07,0]],"abs":[[0.0675,-0.0957,0.1354],[0.2426,0.1166,0.0913],[0.3659,-0.0775,0.0977]],"src":[-0.2445,0.2926],"t":[[0.3754,-0.3275,0.0719]],"minB":0,"maxB":4},{"c":3,"k":"laser","room":"sinai","holes":[[0.4793,0.5609,0.3677,0.07,1.5708],[-0.5626,0.4793,0.4536,0.07,1.5708]],"abs":[[-0.5587,0.067,0.079],[-0.6789,-0.3645,0.1124],[-0.1854,-0.5607,0.089]],"src":[-0.6865,-0.6873],"t":[[-0.7881,-0.0675,0.0855]],"minB":3,"maxB":5},{"c":3,"k":"laser","room":"square","holes":[[-0.02,0.6972,0.5475,0.07,0]],"abs":[[0.3916,-0.313,0.134],[0.6191,-0.6783,0.1416],[0.1536,0.2522,0.129]],"src":[0.3443,-0.7744],"t":[[0.3821,0.4468,0.0704]],"minB":2,"maxB":4},{"c":3,"k":"laser","room":"stadium","abs":[[-0.2955,0.1632,0.1175],[0.3071,0.3776,0.0977]],"src":[0.5211,0.2284],"t":[[-0.6278,0.1261,0.0768]],"minB":0,"maxB":1},{"c":3,"k":"laser","room":"rect","holes":[[-0.5075,0.128,0.6904,0.07,0.0558]],"abs":[[0.156,0.0041,0.1139],[0.1153,-0.2809,0.0992]],"src":[0.4358,0.2385],"t":[[-0.2438,-0.3028,0.0755]],"minB":2,"maxB":3},{"c":3,"k":"laser","room":"hexagon","holes":[[-0.5842,0.1592,0.4416,0.07,1.5708],[0.248,0.5896,0.3933,0.07,0.1189]],"abs":[[0.0636,-0.5765,0.0813],[0.01,-0.2135,0.1175],[0.3045,-0.497,0.0992]],"src":[-0.1309,-0.486],"t":[[0.3665,-0.1396,0.071]],"minB":3,"maxB":4},{"c":3,"k":"laser","room":"rect","abs":[[-0.5043,-0.0834,0.1469],[-0.6494,0.2882,0.1146]],"src":[-0.348,0.3056],"t":[[-0.8212,-0.3411,0.0849]],"minB":0,"maxB":1},{"c":3,"k":"laser","room":"sinai","holes":[[0.6193,-0.4124,0.5872,0.07,0]],"abs":[[-0.1405,0.6791,0.1065],[0.5836,0.4814,0.1473]],"src":[0.8933,0.2411],"t":[[-0.4307,0.7341,0.0994]],"minB":3,"maxB":5},{"c":3,"k":"laser","room":"sinai","holes":[[0.5649,-0.3697,0.6138,0.07,1.5708]],"abs":[[-0.6178,-0.0176,0.1042],[-0.6763,0.44,0.0717],[-0.6811,-0.4168,0.0931]],"src":[-0.8988,-0.1827],"t":[[-0.8712,0.3215,0.0732]],"minB":3,"maxB":3},{"c":4,"k":"mirror","room":"octagon","src":[-0.5284,0.0455],"ang":5.7831,"t":[[-0.4197,-0.5472,0.0867]],"minB":0,"maxB":6,"ml":0.5459,"mc":2},{"c":4,"k":"mirror","room":"hexagon","src":[-0.0582,0.2046],"ang":2.5288,"t":[[0.0708,-0.5905,0.0878]],"minB":0,"maxB":6,"ml":0.6443,"mc":2},{"c":4,"k":"mirror","room":"octagon","src":[-0.0359,0.7005],"ang":4.047,"t":[[-0.5219,-0.3499,0.085]],"minB":0,"maxB":5,"ml":0.6373,"mc":2},{"c":4,"k":"mirror","room":"hexagon","src":[-0.2113,-0.5864],"ang":5.8226,"t":[[0.6558,-0.2836,0.0937]],"minB":0,"maxB":6,"ml":0.5694,"mc":2},{"c":4,"k":"mirror","room":"square","src":[0.0922,0.4763],"ang":1.3498,"t":[[-0.3907,0.1233,0.0886]],"minB":0,"maxB":7,"ml":0.5864,"mc":2},{"c":4,"k":"mirror","room":"lroom","src":[-0.8122,0.753],"ang":4.9045,"t":[[-0.339,0.4479,0.0934]],"minB":0,"maxB":2,"ml":0.5607,"mc":1},{"c":4,"k":"mirror","room":"square","src":[-0.7138,-0.5307],"ang":5.6908,"t":[[0.7491,0.5574,0.0828]],"minB":0,"maxB":5,"ml":0.5318,"mc":1},{"c":4,"k":"mirror","room":"octagon","src":[-0.3796,0.6912],"ang":0.545,"t":[[0.1044,-0.7392,0.082]],"minB":0,"maxB":4,"ml":0.5584,"mc":1},{"c":4,"k":"mirror","room":"square","src":[-0.5676,-0.1212],"ang":4.2484,"t":[[0.3825,0.7049,0.0955]],"minB":0,"maxB":5,"ml":0.5649,"mc":1},{"c":4,"k":"mirror","room":"lroom","src":[-0.4052,0.0552],"ang":2.9081,"t":[[0.5597,-0.5747,0.087]],"minB":0,"maxB":5,"ml":0.6212,"mc":1},{"c":4,"k":"mirror","room":"square","abs":[[-0.4815,0.3127,0.1319],[0.3124,0.2781,0.1121]],"src":[-0.7975,-0.2475],"ang":2.016,"t":[[-0.775,-0.7362,0.0836]],"minB":0,"maxB":6,"ml":0.5331,"mc":1},{"c":4,"k":"mirror","room":"rect","abs":[[0.4475,0.0395,0.1434],[-0.3788,-0.359,0.106]],"src":[-0.1702,0.1702],"ang":2.3782,"t":[[-0.8727,-0.2176,0.0818]],"minB":0,"maxB":4,"ml":0.4873,"mc":1},{"c":4,"k":"mirror","room":"square","abs":[[0.0187,-0.1515,0.1084],[0.3835,-0.6992,0.1194]],"src":[-0.5298,0.4767],"ang":1.8545,"t":[[0.7304,-0.0147,0.096]],"minB":0,"maxB":6,"ml":0.4771,"mc":1},{"c":4,"k":"mirror","room":"rect","abs":[[-0.4723,-0.3738,0.1303],[-0.3069,0.1128,0.1186]],"src":[0.4599,-0.3892],"ang":5.814,"t":[[-0.0606,-0.4223,0.0914]],"minB":0,"maxB":4,"ml":0.5035,"mc":1},{"c":4,"k":"mirror","room":"square","abs":[[-0.7055,-0.0468,0.0842]],"src":[-0.1889,0.7403],"ang":2.4408,"t":[[-0.3308,-0.2665,0.0803]],"minB":0,"maxB":5,"ml":0.5014,"mc":1},{"c":4,"k":"mirror","room":"square","src":[-0.6243,0.3962],"ang":3.101,"t":[[-0.2248,0.8529,0.0823]],"minB":0,"maxB":4,"ml":0.5395,"mc":1},{"c":4,"k":"mirror","room":"square","src":[-0.4365,0.7429],"ang":1.6213,"t":[[0.4201,0.5785,0.0899]],"minB":0,"maxB":4,"ml":0.5916,"mc":1},{"c":4,"k":"mirror","room":"square","abs":[[0.7186,0.1619,0.1072],[-0.8689,0.1996,0.0717]],"src":[-0.3365,0.2093],"ang":2.6881,"t":[[-0.1939,-0.7685,0.0819]],"minB":0,"maxB":5,"ml":0.484,"mc":1},{"c":4,"k":"mirror","room":"square","src":[0.4612,0.5487],"ang":2.976,"t":[[0.3796,-0.408,0.0802]],"minB":0,"maxB":3,"ml":0.6673,"mc":1},{"c":4,"k":"mirror","room":"square","src":[0.5249,-0.6046],"ang":0.0245,"t":[[0.1488,0.3898,0.0802]],"minB":0,"maxB":3,"ml":0.5652,"mc":1},{"c":5,"k":"mirror","room":"lroom","abs":[[0.5185,-0.597,0.1471]],"src":[-0.7103,-0.7106],"ang":4.8048,"t":[[-0.1804,-0.786,0.0876]],"minB":0,"maxB":7,"ml":0.5089,"mc":2},{"c":5,"k":"mirror","room":"hexagon","abs":[[-0.025,0.4543,0.1414],[-0.4669,0.5526,0.1002]],"src":[0.6044,-0.3609],"ang":2.6766,"t":[[0.37,0.2494,0.0862]],"minB":0,"maxB":7,"ml":0.4241,"mc":2},{"c":5,"k":"cover","room":"sinai","holes":[[-0.5658,0.6628,0.5329,0.07,1.5708]],"abs":[[0.6824,-0.1184,0.0718]],"lamps":1,"maxB":2,"need":98},{"c":5,"k":"cover","room":"mushroom","holes":[[0.0282,0.5787,0.6462,0.07,0],[-0.3973,0.2636,0.3543,0.07,1.5708]],"abs":[[0.0555,-0.6747,0.0851]],"lamps":1,"maxB":2,"need":93},{"c":5,"k":"cover","room":"cross","holes":[[-0.1164,0.0171,0.552,0.07,0],[0.626,-0.0827,0.5173,0.07,0]],"abs":[[-0.769,0.0832,0.0856],[0.5247,0.1661,0.1241]],"lamps":1,"maxB":2,"need":92.5},{"c":5,"k":"mirror","room":"square","abs":[[0.4839,0.661,0.0874]],"src":[-0.6523,0.4334],"ang":0.3692,"t":[[0.4635,0.2925,0.0835]],"minB":0,"maxB":5,"ml":0.446,"mc":2},{"c":5,"k":"laser","room":"octagon","abs":[[-0.1848,-0.1817,0.1163],[0.0672,0.4569,0.1368]],"src":[-0.4523,-0.2479],"t":[[0.3608,0.3128,0.0996],[-0.1991,0.7179,0.0781],[-0.7729,0.143,0.0866]],"minB":0,"maxB":6},{"c":5,"k":"laser","room":"peace","src":[0.2732,0.1011],"t":[[0.3923,-0.5936,0.0713]],"minB":5,"maxB":6},{"c":5,"k":"laser","room":"square","abs":[[-0.3663,-0.2755,0.1393],[-0.149,-0.6416,0.0741]],"src":[-0.4368,-0.6585],"t":[[-0.1719,0.0815,0.0779],[0.69,0.8697,0.0833],[-0.2337,0.6391,0.0895]],"minB":0,"maxB":5},{"c":5,"k":"laser","room":"peace","src":[-0.6781,0.1525],"t":[[-0.1757,-0.6269,0.0772]],"minB":5,"maxB":5},{"c":5,"k":"laser","room":"donut","src":[-0.4186,0.5202],"t":[[0.2484,-0.4547,0.0962]],"minB":3,"maxB":3},{"c":5,"k":"laser","room":"peace","src":[0.2281,0.4915],"t":[[-0.3075,0.3496,0.0784]],"minB":3,"maxB":3},{"c":5,"k":"mirror","room":"sinai","holes":[[-0.2997,-0.7087,0.4053,0.07,1.5708]],"abs":[[0.2786,0.5071,0.1173],[0.6349,0.3413,0.1438]],"src":[-0.7059,-0.6422],"ang":3.8063,"t":[[0.351,-0.5677,0.0823]],"minB":0,"maxB":6,"ml":0.4536,"mc":1},{"c":5,"k":"laser","room":"peace","src":[-0.3584,0.5501],"t":[[0.3781,0.7741,0.0939]],"minB":5,"maxB":6},{"c":5,"k":"laser","room":"hexagon","abs":[[0.4689,0.214,0.0923],[0.2185,0.0872,0.0979]],"src":[0.2156,0.4449],"t":[[0.607,-0.106,0.0714],[-0.0644,0.0656,0.0913],[-0.6094,0.2933,0.0967]],"minB":0,"maxB":3},{"c":5,"k":"laser","room":"peace","src":[0.6732,0.4419],"t":[[0.3313,-0.5894,0.0796]],"minB":5,"maxB":5},{"c":5,"k":"laser","room":"sinai","abs":[[-0.5596,0.161,0.1392],[-0.4486,-0.3436,0.1004]],"src":[-0.4419,-0.6942],"t":[[-0.4712,0.621,0.0946],[0.5284,0.1694,0.0889],[0.8322,-0.6044,0.0711]],"minB":0,"maxB":3},{"c":5,"k":"mirror","room":"hexagon","holes":[[-0.06,-0.4093,0.5054,0.07,1.4669]],"abs":[[-0.2692,0.6229,0.1387],[-0.273,0.0131,0.1328]],"src":[-0.2193,-0.5383],"ang":0.3571,"t":[[0.4365,-0.5049,0.0851]],"minB":0,"maxB":4,"ml":0.4408,"mc":1},{"c":5,"k":"mirror","room":"lroom","holes":[[0.354,-0.6269,0.5892,0.07,1.5708]],"abs":[[-0.0787,-0.4655,0.1259],[-0.6094,-0.5138,0.1161]],"src":[-0.6682,0.6464],"ang":3.5521,"t":[[0.1715,-0.7195,0.0858]],"minB":0,"maxB":5,"ml":0.3529,"mc":1},{"c":5,"k":"cover","room":"penrose","lamps":2,"maxB":40,"need":99.5}]/*END*/;
 
   // =====================================================================
   //  Состояние
@@ -530,13 +611,19 @@
   const saveCfg = () => store.set("mirror-cfg", cfg);
 
   let view = "free";                // free | draw | puzzle
-  let shape = SHAPES[0], mode = "lamp", lights = [], photons = [], auto = false, autoTimer = 0, autoCount = 0;
-  let freeShape = SHAPES[0];
-  let custom = null;                // своя нарисованная комната
+  let tool = "lamp";
+  let entry = CATALOG[0];           // выбранная комната свободного режима
+  let freeMirrors = [], freeAbs = [];
+  let shape = null, lights = [], photons = [];
+  let auto = false, autoTimer = 0, autoCount = 0;
+  let custom = null, customEntry = null;
   let drawLoops = [], stroke = null;
-  let level = null, levelIdx = -1, attempts = 0, lampsPlaced = [], unlit = null, puzzleTimer = 0, solved = new Set(store.get("mirror-solved", []));
+  let lvl = null, lvlIdx = -1, lvlBase = null, attempts = 0, lampsPlaced = [], placed = [], fired = false, unlit = null, puzzleTimer = 0;
+  const stars = store.get("mirror-stars-v2", {});
   let paused = false, emaMs = 16, slowFor = 0, grace = 2;
   const MAX_PHOTONS = 5000;
+  const baseCache = {};
+  const baseOf = (id) => id === "custom" ? custom : (baseCache[id] || (baseCache[id] = makeRoom(id)));
 
   // =====================================================================
   //  Холсты
@@ -548,7 +635,7 @@
   const toS = (x, y) => [ox + x * sc, oy - y * sc];
   const toW = (X, Y) => [(X - ox) / sc, (oy - Y) / sc];
   const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-  const COL = { wall: css("--wall"), muted: css("--muted"), target: css("--target"), ok: css("--ok") };
+  const COL = { wall: css("--wall"), mirror: css("--mirror"), hole: css("--hole"), muted: css("--muted"), target: css("--target"), ok: css("--ok") };
 
   function fit() {
     const r = stage.getBoundingClientRect();
@@ -557,7 +644,7 @@
     for (const c of [cvT, cvW, cvO]) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
     for (const c of [cT, cW, cO]) c.setTransform(dpr, 0, 0, dpr, 0, 0);
     const [x0, y0, x1, y1] = view === "draw" ? [-1, -1.15, 1, 1.15] : shape.box;
-    const top = Math.min(view === "puzzle" ? 120 : 110, H * 0.22), pad = 18;
+    const top = Math.min(view === "puzzle" ? 128 : 110, H * 0.24), pad = 18;
     sc = Math.min((W - 2 * pad) / (x1 - x0), (H - top - pad) / (y1 - y0));
     ox = W / 2 - sc * (x0 + x1) / 2;
     oy = top + (H - top - pad) / 2 + sc * (y0 + y1) / 2;
@@ -583,6 +670,16 @@
     }
     cW.lineWidth = 1.4; cW.strokeStyle = COL.wall;
     for (const loop of shape.loops) strokeLoop(cW, loop);
+    cW.lineWidth = 2.6; cW.strokeStyle = COL.mirror;
+    for (const [x1, y1, x2, y2] of shape.mirrors) strokeLoop(cW, [[x1, y1], [x2, y2]], false);
+    for (const [x, y, r] of shape.absorbers) {
+      const [X, Y] = toS(x, y), R = r * sc;
+      const g = cW.createRadialGradient(X, Y, R * 0.55, X, Y, R * 1.25);
+      g.addColorStop(0, "#000"); g.addColorStop(0.75, "rgba(167,123,255,0.55)"); g.addColorStop(1, "rgba(167,123,255,0)");
+      cW.fillStyle = g; cW.beginPath(); cW.arc(X, Y, R * 1.25, 0, TAU); cW.fill();
+      cW.fillStyle = "#000"; cW.beginPath(); cW.arc(X, Y, R, 0, TAU); cW.fill();
+      cW.strokeStyle = COL.hole; cW.lineWidth = 1.2; cW.stroke();
+    }
     if (cfg.foci && view === "free") {
       cW.strokeStyle = COL.muted; cW.lineWidth = 1;
       for (const [x, y] of shape.foci) { const [X, Y] = toS(x, y); cW.beginPath(); cW.arc(X, Y, 3, 0, TAU); cW.stroke(); }
@@ -594,59 +691,57 @@
   //  Свет и фотоны
   // =====================================================================
   const hueColor = (i) => `hsl(${(i * 137.5) % 360} 95% 62%)`;
-  function addPhoton(x, y, ang, maxB, colorIdx) {
+  const prismColor = (k) => `hsl(${k * 46} 100% 62%)`;
+  function addPhoton(x, y, ang, maxB, c, prism) {
     if (photons.length >= MAX_PHOTONS) return;
     const dx = Math.cos(ang), dy = Math.sin(ang), hit = castRay(shape, x, y, dx, dy);
     if (!hit) return;
-    photons.push({ x, y, dx, dy, rem: hit.t, nx: hit.nx, ny: hit.ny, b: 0, maxB, c: colorIdx % 24 });
+    photons.push({ x, y, dx, dy, rem: hit.t, nx: hit.nx, ny: hit.ny, ab: hit.absorb, b: 0, maxB, c: prism ? c % 8 : c % 24, prism: !!prism });
   }
+  function burst(x, y, n, maxB) { const off = Math.random() * TAU / n; for (let i = 0; i < n; i++) addPhoton(x, y, off + TAU * i / n, maxB, i); }
   function spawn(l) {
     const { x, y, kind, ang } = l, maxB = l.maxB != null ? l.maxB : cfg.bounces;
-    if (kind === "lamp") {
-      const n = l.rays || cfg.rays, off = Math.random() * TAU / n;
-      for (let i = 0; i < n; i++) addPhoton(x, y, off + TAU * i / n, maxB, i);
-    } else if (kind === "torch") {
+    if (kind === "lamp") burst(x, y, l.rays || cfg.rays, maxB);
+    else if (kind === "pulse") { l.t = 0; burst(x, y, Math.max(60, Math.round(cfg.rays / 2)), Math.min(maxB, 30)); }
+    else if (kind === "torch") {
       const n = Math.max(10, Math.round(cfg.rays / 4)), cone = 0.9;
       for (let i = 0; i < n; i++) addPhoton(x, y, ang - cone / 2 + cone * i / (n - 1), maxB, i);
-    } else if (l.exact) {
-      addPhoton(x, y, ang, maxB, 0);
-    } else {
-      for (let i = 0; i < 3; i++) addPhoton(x, y, ang + (i - 1) * 0.002, Math.min(4000, maxB * 25), i * 8);
-    }
+    } else if (kind === "prism") {
+      for (let k = 0; k < 7; k++) addPhoton(x, y, ang + (k - 3) * 0.014, Math.min(4000, maxB * 25), k, true);
+    } else if (kind === "band") {
+      const n = 48, px = -Math.sin(ang), py = Math.cos(ang);
+      for (let i = 0; i < n; i++) { const o = -0.3 + 0.6 * i / (n - 1), sx = x + px * o, sy = y + py * o; if (inside(shape, sx, sy)) addPhoton(sx, sy, ang, maxB, i); }
+    } else if (l.exact) addPhoton(x, y, ang, maxB, 0);
+    else for (let i = 0; i < 3; i++) addPhoton(x, y, ang + (i - 1) * 0.002, Math.min(4000, maxB * 25), i * 8);
   }
   function restart() { clearTrails(); photons = []; lights.forEach(spawn); }
   function resume() { if (paused) { paused = false; perfEl.hidden = true; } grace = 1.5; slowFor = 0; emaMs = 16; }
-
-  function placeLight(x, y, kind, ang) {
-    if (!cfg.multi) { lights = []; photons = []; clearTrails(); }
-    const l = { x, y, kind, ang };
-    lights.push(l); spawn(l);
-    resume(); hideHint(); haptic("light");
-  }
+  function setGeometry(s) { shape = s; drawWalls(); restart(); }
 
   // =====================================================================
   //  Анимация + защита от тормозов
   // =====================================================================
   let last = performance.now();
-  const buckets = Array.from({ length: 24 }, () => []);
-  const speedNow = () => cfg.speed * (view === "puzzle" ? 1.8 : 1);
+  const buckets = Array.from({ length: 24 }, () => []), pbuckets = Array.from({ length: 8 }, () => []);
+  let shotSpeed = 0;   // в загадках выстрел ускоряется, чтобы долетать за 2,5 секунды
+  const speedNow = () => view === "puzzle" ? Math.max(cfg.speed * 1.8, shotSpeed) : cfg.speed;
+  const fadeOn = () => cfg.fade || lights.some(l => l.kind === "pulse");
 
-  function pauseAnim() {
-    paused = true; perfEl.hidden = false; setAuto(false);
-  }
+  function pauseAnim() { paused = true; perfEl.hidden = false; setAuto(false); }
   function frame(now) {
     const raw = now - last; last = now;
     const dt = Math.min(0.05, raw / 1000);
-
-    // Если кадр в среднем дольше 45 мс (меньше ~22 FPS) полторы секунды подряд — ставим на паузу
+    // Кадр в среднем дольше 45 мс (меньше ~22 FPS) полторы секунды подряд — ставим на паузу
     if (!paused && photons.length && raw < 250) {
       emaMs = emaMs * 0.9 + raw * 0.1;
       if (grace > 0) grace -= raw / 1000;
       else if (emaMs > 45) { slowFor += raw / 1000; if (slowFor > 1.5) pauseAnim(); }
       else slowFor = 0;
     }
-
-    if (!paused) stepPhotons(dt);
+    if (!paused) {
+      for (const l of lights) if (l.kind === "pulse") { l.t = (l.t || 0) + dt; if (l.t > 1.3) { l.t = 0; burst(l.x, l.y, Math.max(60, Math.round(cfg.rays / 2)), Math.min(cfg.bounces, 30)); } }
+      stepPhotons(dt);
+    }
     drawOverlay(now);
     if (auto && !paused) { autoTimer += dt; if (autoTimer > 7) { autoTimer = 0; autoStep(); } }
     statsEl.textContent = paused ? "пауза" : photons.length ? `лучей: ${photons.length}` : "";
@@ -656,88 +751,171 @@
   function stepPhotons(dt) {
     const step = speedNow() * dt, rainbow = cfg.color === "rainbow";
     for (const b of buckets) b.length = 0;
+    for (const b of pbuckets) b.length = 0;
     const alive = [];
     for (const p of photons) {
       let dist = step, dead = false;
-      const seg = rainbow ? buckets[p.c] : buckets[0];
+      const seg = p.prism ? pbuckets[p.c] : rainbow ? buckets[p.c] : buckets[0];
       seg.push(p.x, p.y);
       while (dist > 0) {
         if (dist < p.rem) { p.x += p.dx * dist; p.y += p.dy * dist; p.rem -= dist; seg.push(p.x, p.y); dist = 0; break; }
         p.x += p.dx * p.rem; p.y += p.dy * p.rem; dist -= p.rem;
-        seg.push(p.x, p.y, p.x, p.y);
+        seg.push(p.x, p.y);
+        if (p.ab) { dead = true; break; }
+        seg.push(p.x, p.y);
         const d = p.dx * p.nx + p.dy * p.ny;
         p.dx -= 2 * d * p.nx; p.dy -= 2 * d * p.ny;
         if (++p.b > p.maxB) { dead = true; seg.length -= 2; break; }
         const hit = castRay(shape, p.x, p.y, p.dx, p.dy);
         if (!hit) { dead = true; seg.length -= 2; break; }
-        p.rem = hit.t; p.nx = hit.nx; p.ny = hit.ny;
+        p.rem = hit.t; p.nx = hit.nx; p.ny = hit.ny; p.ab = hit.absorb;
       }
       if (seg.length % 4) seg.push(p.x, p.y);
       if (!dead) alive.push(p);
     }
     photons = alive;
-    if (cfg.fade) {
+    if (fadeOn()) {
       cT.globalCompositeOperation = "destination-out";
       cT.fillStyle = "rgba(0,0,0,0.035)"; cT.fillRect(0, 0, W, H);
     }
     cT.globalCompositeOperation = "lighter";
-    cT.lineWidth = 1; cT.globalAlpha = view === "puzzle" && lights.some(l => l.exact) ? 0.9 : cfg.bright;
-    buckets.forEach((seg, i) => {
+    cT.lineWidth = 1;
+    const strokeSegs = (seg, col) => {
       if (!seg.length) return;
-      cT.strokeStyle = rainbow ? hueColor(i) : cfg.color;
-      cT.beginPath();
+      cT.strokeStyle = col; cT.beginPath();
       for (let j = 0; j + 3 < seg.length; j += 4) {
         const [ax, ay] = toS(seg[j], seg[j + 1]), [bx, by] = toS(seg[j + 2], seg[j + 3]);
         cT.moveTo(ax, ay); cT.lineTo(bx, by);
       }
       cT.stroke();
-    });
+    };
+    cT.globalAlpha = view === "puzzle" && lights.some(l => l.exact) ? 0.9 : cfg.bright;
+    buckets.forEach((seg, i) => strokeSegs(seg, rainbow ? hueColor(i) : cfg.color));
+    cT.globalAlpha = Math.max(0.35, cfg.bright * 2.5);
+    pbuckets.forEach((seg, k) => strokeSegs(seg, prismColor(k)));
     cT.globalAlpha = 1; cT.globalCompositeOperation = "source-over";
   }
 
-  let aim = null;
+  let aim = null, preview = null;
   function glow(ctx, X, Y, r, col) {
     const g = ctx.createRadialGradient(X, Y, 0, X, Y, r);
     g.addColorStop(0, col); g.addColorStop(0.35, col); g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(X, Y, r, 0, TAU); ctx.fill();
   }
+  function dashTo(ctx, x0, y0, x1, y1, col, w = 1.5) {
+    ctx.strokeStyle = col; ctx.setLineDash([5, 5]); ctx.lineWidth = w;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // Пунктир от точки до первой стены (подсказка прицеливания)
+  function firstLeg(x, y, ang) {
+    const h = castRay(shape, x, y, Math.cos(ang), Math.sin(ang));
+    const t = h ? h.t : 0.3;
+    return toS(x + Math.cos(ang) * t, y + Math.sin(ang) * t);
+  }
   function drawOverlay(now) {
     cO.clearRect(0, 0, W, H);
     const col = cfg.color === "rainbow" ? "#ffffff" : cfg.color;
-
     if (view === "draw") {
-      if (stroke && stroke.length > 1) { cO.strokeStyle = cfg.color === "rainbow" ? "#ffd94a" : col; cO.lineWidth = 2.5; strokeLoop(cO, stroke, false); }
+      if (stroke && stroke.length > 1) { cO.strokeStyle = "#ffd94a"; cO.lineWidth = 2.5; strokeLoop(cO, stroke, false); }
       return;
     }
-    if (view === "puzzle" && level) {
+    if (view === "puzzle" && lvl) {
       if (unlit) {
         cO.fillStyle = "rgba(255,90,122,0.55)";
         const G = unlit.G, s2 = Math.max(1.5, G.cell * sc * 0.35);
         for (let i = 0; i < G.n; i++) if (!unlit.lit[i]) { const [X, Y] = toS(G.centers[2 * i], G.centers[2 * i + 1]); cO.fillRect(X - s2 / 2, Y - s2 / 2, s2, s2); }
       }
-      if (level.target) {
-        const [tx, ty, tr] = level.target, [X, Y] = toS(tx, ty), pulse = 1 + 0.12 * Math.sin(now / 250);
+      for (const [tx, ty, tr] of lvl.t || []) {
+        const [X, Y] = toS(tx, ty), pulse = 1 + 0.12 * Math.sin(now / 250);
         cO.strokeStyle = COL.target; cO.lineWidth = 2;
         cO.beginPath(); cO.arc(X, Y, tr * sc * pulse, 0, TAU); cO.stroke();
         cO.beginPath(); cO.arc(X, Y, tr * sc * 0.45, 0, TAU); cO.stroke();
       }
-      if (level.kind === "laser") {
-        const [X, Y] = toS(level.src[0], level.src[1]);
+      if (lvl.k === "laser" || lvl.k === "mirror") {
+        const [X, Y] = toS(lvl.src[0], lvl.src[1]);
+        if (lvl.k === "mirror" && !fired) { const [ex, ey] = firstLeg(lvl.src[0], lvl.src[1], lvl.ang); dashTo(cO, X, Y, ex, ey, "rgba(255,90,90,0.7)", 1.2); }
         glow(cO, X, Y, 11, "#ff3b3b");
       }
     }
-
     if (photons.length && photons.length < 1500) {
       cO.fillStyle = col; cO.globalAlpha = 0.9;
       for (const p of photons) { const [X, Y] = toS(p.x, p.y); cO.fillRect(X - 0.8, Y - 0.8, 1.6, 1.6); }
       cO.globalAlpha = 1;
     }
-    for (const l of lights) { if (!l.exact) { const [X, Y] = toS(l.x, l.y); glow(cO, X, Y, 12, col); } }
-    if (aim) {
-      cO.strokeStyle = view === "puzzle" ? "#ff6b6b" : col; cO.setLineDash([5, 5]); cO.lineWidth = 1.5;
-      cO.beginPath(); cO.moveTo(aim.x0, aim.y0); cO.lineTo(aim.x1, aim.y1); cO.stroke(); cO.setLineDash([]);
-      if (view !== "puzzle") { cO.fillStyle = col; cO.beginPath(); cO.arc(aim.x0, aim.y0, 5, 0, TAU); cO.fill(); }
+    for (const l of lights) if (!l.exact) {
+      const [X, Y] = toS(l.x, l.y);
+      glow(cO, X, Y, l.kind === "pulse" ? 12 + 4 * Math.sin(now / 160) : 12, l.kind === "prism" ? "#ffffff" : col);
     }
+    if (aim) {
+      const red = view === "puzzle";
+      const ang = Math.atan2(-(aim.y1 - aim.y0), aim.x1 - aim.x0);
+      if (red && Math.hypot(aim.x1 - aim.x0, aim.y1 - aim.y0) > 8) {
+        const [wx, wy] = toW(aim.x0, aim.y0), [ex, ey] = firstLeg(wx, wy, ang);
+        dashTo(cO, aim.x0, aim.y0, ex, ey, "rgba(255,107,107,0.55)", 1.2);
+      }
+      dashTo(cO, aim.x0, aim.y0, aim.x1, aim.y1, red ? "#ff6b6b" : col);
+      if (!red) { cO.fillStyle = col; cO.beginPath(); cO.arc(aim.x0, aim.y0, 5, 0, TAU); cO.fill(); }
+    }
+    if (preview) {
+      cO.lineCap = "round";
+      if (preview.kind === "mirror") {
+        cO.strokeStyle = preview.ok ? COL.mirror : COL.target; cO.lineWidth = 3;
+        cO.beginPath(); cO.moveTo(preview.x0, preview.y0); cO.lineTo(preview.x1, preview.y1); cO.stroke();
+      } else {
+        cO.strokeStyle = COL.hole; cO.lineWidth = 2; cO.setLineDash([4, 4]);
+        cO.beginPath(); cO.arc(preview.x0, preview.y0, preview.r, 0, TAU); cO.stroke(); cO.setLineDash([]);
+      }
+    }
+  }
+
+  // =====================================================================
+  //  Инструменты свободного режима
+  // =====================================================================
+  const TOOLS = [
+    ["lamp", "Лампа", "Нажми — свет во все стороны"],
+    ["torch", "Фонарь", "Нажми и потяни — конус света"],
+    ["laser", "Лазер", "Нажми и потяни — один луч"],
+    ["prism", "Призма", "Нажми и потяни — радужный веер"],
+    ["band", "Полоса", "Нажми и потяни — параллельные лучи, как из окна"],
+    ["pulse", "Пульсар", "Нажми — лампа, которая мигает волнами"],
+    ["mirror", "Зеркало", "Проведи линию — появится зеркало"],
+    ["hole", "Дыра", "Нажми — чёрная дыра. Потяни, чтобы сделать больше"],
+    ["eraser", "Ластик", "Нажми на зеркало, дыру или лампу, чтобы убрать"],
+  ];
+  const DIR_TOOLS = new Set(["torch", "laser", "prism", "band"]);
+
+  function placeLight(x, y, kind, ang) {
+    if (!cfg.multi) { lights = []; photons = []; clearTrails(); }
+    const l = { x, y, kind, ang };
+    lights.push(l); spawn(l);
+    resume(); hideHint(); haptic("light");
+  }
+  const rebuildFree = () => setGeometry(compose(baseOf(entry.id), freeMirrors, freeAbs));
+  function addMirror(ax, ay, bx, by, maxLen) {
+    let L = Math.hypot(bx - ax, by - ay);
+    if (L < 0.06) { toast("Протяни пальцем — так рисуется зеркало"); return null; }
+    if (maxLen && L > maxLen) { bx = ax + (bx - ax) * maxLen / L; by = ay + (by - ay) * maxLen / L; L = maxLen; }
+    if (!segmentClear(shape, ax, ay, bx, by)) { toast("Зеркало должно быть внутри комнаты и не задевать стены"); haptic("error"); return null; }
+    return [ax, ay, bx, by];
+  }
+  function addHole(x, y, r) {
+    if (!inside(shape, x, y)) { toast("Поставь дыру внутри комнаты"); return; }
+    const room = clearance(compose(baseOf(entry.id), freeMirrors, freeAbs), x, y);
+    r = Math.max(0.03, Math.min(r, 0.3, room * 0.95));
+    if (freeAbs.length >= 20) { toast("Хватит дыр — максимум 20"); return; }
+    freeAbs.push([x, y, r]); rebuildFree(); haptic("medium");
+  }
+  function eraseAt(x, y) {
+    const tol = 28 / sc;
+    let best = null, bd = tol;
+    freeMirrors.forEach((m, i) => { const d = pointSegDist(x, y, ...m); if (d < bd) { bd = d; best = ["m", i]; } });
+    freeAbs.forEach((a, i) => { const d = Math.max(0, Math.hypot(x - a[0], y - a[1]) - a[2]); if (d < bd) { bd = d; best = ["a", i]; } });
+    lights.forEach((l, i) => { const d = Math.hypot(x - l.x, y - l.y); if (d < bd) { bd = d; best = ["l", i]; } });
+    if (!best) { toast("Тут нечего стирать"); return; }
+    if (best[0] === "m") freeMirrors.splice(best[1], 1);
+    else if (best[0] === "a") freeAbs.splice(best[1], 1);
+    else lights.splice(best[1], 1);
+    rebuildFree(); haptic("light");
   }
 
   // =====================================================================
@@ -745,17 +923,23 @@
   // =====================================================================
   let down = null;
   const local = (e) => { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  function startPreview(X, Y) {
+    if ((view === "free" && tool === "mirror") || (view === "puzzle" && lvl && lvl.k === "mirror")) preview = { kind: "mirror", x0: X, y0: Y, x1: X, y1: Y, ok: true };
+    else if (view === "free" && tool === "hole") preview = { kind: "hole", x0: X, y0: Y, r: 0.09 * sc };
+  }
   stage.addEventListener("pointerdown", (e) => {
-    if (e.target.closest(".panel, .win, .perf")) return;
+    if (e.target.closest(".panel, .card")) return;
     const [X, Y] = local(e);
     down = { x: X, y: Y };
     stage.setPointerCapture(e.pointerId);
-    if (view === "draw") { const [wx, wy] = toW(X, Y); stroke = [[wx, wy]]; return; }
-    if (view === "puzzle" && level && level.kind === "laser") {
-      const [sx, sy] = toS(level.src[0], level.src[1]);
+    if (view === "draw") { stroke = [toW(X, Y)]; return; }
+    if (view === "puzzle" && lvl && lvl.k === "laser") {
+      const [sx, sy] = toS(lvl.src[0], lvl.src[1]);
       aim = { x0: sx, y0: sy, x1: X, y1: Y }; return;
     }
-    if (view === "free" && mode !== "lamp") aim = { x0: X, y0: Y, x1: X, y1: Y };
+    if (view === "puzzle" && lvl && lvl.k === "mirror" && fired && winCard.hidden) { resetMirrors(); }
+    startPreview(X, Y);
+    if (view === "free" && DIR_TOOLS.has(tool)) aim = { x0: X, y0: Y, x1: X, y1: Y };
   });
   stage.addEventListener("pointermove", (e) => {
     if (!down) return;
@@ -766,24 +950,41 @@
       return;
     }
     if (aim) { aim.x1 = X; aim.y1 = Y; }
+    if (preview) {
+      if (preview.kind === "mirror") {
+        let x1 = X, y1 = Y;
+        const maxLen = view === "puzzle" && lvl ? lvl.ml * sc : Infinity, L = Math.hypot(x1 - preview.x0, y1 - preview.y0);
+        if (L > maxLen) { x1 = preview.x0 + (x1 - preview.x0) * maxLen / L; y1 = preview.y0 + (y1 - preview.y0) * maxLen / L; }
+        preview.x1 = x1; preview.y1 = y1;
+        const [a, b] = toW(preview.x0, preview.y0), [c, d] = toW(x1, y1);
+        preview.ok = Math.hypot(c - a, d - b) < 0.06 || segmentClear(shape, a, b, c, d);
+      } else preview.r = Math.max(0.03 * sc, Math.hypot(X - preview.x0, Y - preview.y0));
+    }
   });
   stage.addEventListener("pointerup", (e) => {
     if (!down) return;
     const [X, Y] = local(e), start = down;
-    down = null;
+    down = null; preview = null;
     if (view === "draw") { finishStroke(); return; }
     if (view === "puzzle") { aim = null; puzzleTap(start, X, Y); return; }
     aim = null;
-    const [wx, wy] = toW(start.x, start.y);
-    if (!inside(shape, wx, wy)) { toast("Поставь свет внутри комнаты"); return; }
+    const [wx, wy] = toW(start.x, start.y), [ex, ey] = toW(X, Y);
+    const dragged = Math.hypot(X - start.x, Y - start.y) > 12;
     if (auto) setAuto(false);
+    if (tool === "eraser") { eraseAt(wx, wy); return; }
+    if (tool === "mirror") {
+      if (freeMirrors.length >= 30) { toast("Хватит зеркал — максимум 30"); return; }
+      const m = addMirror(wx, wy, ex, ey); if (m) { freeMirrors.push(m); rebuildFree(); haptic("medium"); hideHint(); }
+      return;
+    }
+    if (tool === "hole") { addHole(wx, wy, dragged ? Math.hypot(ex - wx, ey - wy) : 0.09); hideHint(); return; }
+    if (!inside(shape, wx, wy)) { toast("Поставь свет внутри комнаты"); return; }
     let ang = Math.random() * TAU;
-    const dX = X - start.x, dY = Y - start.y;
-    if (Math.hypot(dX, dY) > 12) ang = Math.atan2(-dY, dX);
-    else if (mode !== "lamp") toast("Потяни пальцем, чтобы выбрать направление");
-    placeLight(wx, wy, mode, ang);
+    if (dragged) ang = Math.atan2(-(Y - start.y), X - start.x);
+    else if (DIR_TOOLS.has(tool)) toast("Потяни пальцем, чтобы выбрать направление");
+    placeLight(wx, wy, tool, ang);
   });
-  stage.addEventListener("pointercancel", () => { down = null; aim = null; stroke = null; });
+  stage.addEventListener("pointercancel", () => { down = null; aim = null; stroke = null; preview = null; });
 
   // =====================================================================
   //  Своя комната: рисование пальцем
@@ -791,15 +992,11 @@
   function simplify(pts, eps) {           // алгоритм Дугласа — Пекера
     if (pts.length < 3) return pts.slice();
     const keep = new Uint8Array(pts.length); keep[0] = keep[pts.length - 1] = 1;
-    const stack = [[0, pts.length - 1]];
-    while (stack.length) {
-      const [i, j] = stack.pop(); let best = -1, bi = -1;
-      const [ax, ay] = pts[i], [bx, by] = pts[j], L = Math.hypot(bx - ax, by - ay) || 1e-9;
-      for (let k = i + 1; k < j; k++) {
-        const d = Math.abs((bx - ax) * (ay - pts[k][1]) - (ax - pts[k][0]) * (by - ay)) / L;
-        if (d > best) { best = d; bi = k; }
-      }
-      if (best > eps) { keep[bi] = 1; stack.push([i, bi], [bi, j]); }
+    const st = [[0, pts.length - 1]];
+    while (st.length) {
+      const [i, j] = st.pop(); let best = -1, bi = -1;
+      for (let k = i + 1; k < j; k++) { const d = pointSegDist(pts[k][0], pts[k][1], pts[i][0], pts[i][1], pts[j][0], pts[j][1]); if (d > best) { best = d; bi = k; } }
+      if (best > eps) { keep[bi] = 1; st.push([i, bi], [bi, j]); }
     }
     return pts.filter((_, i) => keep[i]);
   }
@@ -842,15 +1039,17 @@
     drawLoops.push(pts); drawWalls(); haptic("light");
     toast(drawLoops.length === 1 ? "Стены готовы. Можешь нарисовать колонны или нажать «Готово»" : "Колонна добавлена");
   }
-  function makeCustom(loops) {
-    const sh = prepare({ id: "custom", name: "Моя комната", short: "Моя", light: [0, 0],
-      fact: "Эту комнату нарисовал ты. Поставь свет и посмотри, что получится.",
-      build: () => ({ loops: loops.map(l => l.map(([x, y]) => P(x, y))) }) });
-    sh.light = randomInside(sh, true);
-    return sh;
+  function setCustom(loops) {
+    custom = prepareLoops(loops.map(l => l.map(([x, y]) => P(x, y))), []);
+    customEntry = { id: "custom", name: "Моя комната", short: "Моя", fact: "Эту комнату нарисовал ты. Поставь свет и посмотри, что получится.", light: centerOf(custom) };
+  }
+  function centerOf(s) {
+    let cx = 0, cy = 0; for (const [x, y] of s.outer) { cx += x; cy += y; }
+    cx /= s.outer.length; cy /= s.outer.length;
+    return inside(s, cx, cy) ? [cx, cy] : randomInside(s);
   }
   const savedLoops = store.get("mirror-custom", null);
-  if (Array.isArray(savedLoops) && savedLoops.length) { try { custom = makeCustom(savedLoops); } catch (e) { custom = null; } }
+  if (Array.isArray(savedLoops) && savedLoops.length) { try { setCustom(savedLoops); } catch (e) { custom = null; customEntry = null; } }
 
   function enterDraw() {
     view = "draw"; setAuto(false);
@@ -861,38 +1060,80 @@
   }
   function finishDraw() {
     if (!drawLoops.length) { toast("Сначала нарисуй стены"); return; }
-    custom = makeCustom(drawLoops);
+    setCustom(drawLoops);
     store.set("mirror-custom", drawLoops.map(l => l.map(([x, y]) => [+x.toFixed(4), +y.toFixed(4)])));
-    view = "free"; setDock("free"); renderChips(); selectShape(custom);
+    view = "free"; setDock("free"); renderChips(); selectShape(customEntry);
     toast("Нажми внутри комнаты, чтобы поставить свет");
   }
 
   // =====================================================================
-  //  Загадки: логика
+  //  Загадки
   // =====================================================================
+  const plural = (n, a, b, c) => { const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 12 || h > 14) ? b : c; };
+  const refl = (n) => `${n} ${plural(n, "отражение", "отражения", "отражений")}`;
+  function levelTitle(L) {
+    const tag = L.k === "cover" ? "свет" : L.k === "focus" ? "фокус" : L.k === "mirror" ? "зеркало" : L.t.length > 1 ? `${L.t.length} мишени` : "лазер";
+    return `${ROOM_NAMES[L.room] || "Комната"} · ${tag}`;
+  }
+  function levelTask(L) {
+    let t = "";
+    if (L.k === "laser" || L.k === "mirror") {
+      if (L.k === "mirror") t = `Лазер закреплён. Нарисуй ${L.mc === 1 ? "зеркало" : "два зеркала"} пальцем, чтобы луч попал ${L.t.length > 1 ? "во все мишени" : "в мишень"}. Длина зеркала ограничена.`;
+      else t = L.t.length === 1 ? "Попади лазером в мишень: нажми и потяни." : `Попади во ${L.t.length === 2 ? "обе мишени" : "все три мишени"} одним выстрелом.`;
+      if (L.minB === L.maxB) t += L.minB === 0 ? " Без отражений." : ` Ровно ${refl(L.minB)}.`;
+      else {
+        if (L.minB > 0) t += ` Нужно не меньше ${refl(L.minB)}.`;
+        if (L.maxB < 12 && L.k === "laser") t += ` Не больше ${refl(L.maxB)}.`;
+      }
+      if (L.abs && L.abs.length) t += " Чёрные дыры поглощают свет.";
+      return t;
+    }
+    if (L.k === "focus") return `Поставь лампу так, чтобы ${L.need}% лучей попали в мишень — сразу или после одного отражения.`;
+    t = `Освети ${L.need}% комнаты ${L.lamps === 1 ? "одной лампой" : "двумя лампами"}.`;
+    if (L.maxB === 0) t += " Свет не отражается — только прямые лучи.";
+    else if (L.maxB < 30) t += ` Лучи отражаются не больше ${L.maxB === 1 ? "одного раза" : L.maxB + " раз"}.`;
+    if (L.abs && L.abs.length) t += " Дыры съедают свет.";
+    return t;
+  }
+  function starsFor(L, n) {
+    if (L.k === "laser" || L.k === "mirror") return n <= 2 ? 3 : n <= 5 ? 2 : 1;
+    return n <= 1 ? 3 : n <= 3 ? 2 : 1;
+  }
+  const starStr = (n) => "★".repeat(n) + "☆".repeat(3 - n);
+
   function openLevels() {
+    clearTimeout(puzzleTimer);
     view = "puzzle"; setAuto(false); setDock("puzzle");
     renderLevels(); levelsPanel.hidden = false; winCard.hidden = true;
   }
   function loadLevel(i) {
     clearTimeout(puzzleTimer);
-    levelIdx = i; level = LEVELS[i]; shape = level.shape;
-    attempts = 0; lampsPlaced = []; unlit = null; lights = []; photons = [];
+    if (view !== "puzzle") { view = "puzzle"; setAuto(false); setDock("puzzle"); }
+    lvlIdx = i; lvl = LEVEL_DATA[i];
+    lvlBase = makeRoom(lvl.room, { holes: lvl.holes || [] });
+    attempts = 0; lampsPlaced = []; placed = []; fired = false; unlit = null; lights = []; photons = []; shotSpeed = 0;
+    shape = compose(lvlBase, lvl.mir || [], lvl.abs || []);
     levelsPanel.hidden = true; winCard.hidden = true;
-    setTitle(`${i + 1}. ${level.name}`, level.task);
+    setTitle(`${i + 1}. ${levelTitle(lvl)}`, levelTask(lvl));
     updateStatus(); fit(); hideHint();
   }
   function updateStatus() {
-    if (!level) return;
-    if (level.kind === "laser") statusEl.textContent = attempts ? `Выстрелов: ${attempts}` : "Нажми и потяни, чтобы выстрелить";
-    else if (level.kind === "focus") statusEl.textContent = `Нужно ≥ ${level.need}% света в мишени`;
-    else statusEl.textContent = `Ламп: ${lampsPlaced.length} из ${level.lamps} · нужно ≥ ${level.need}%`;
+    if (!lvl) return;
+    const best = stars[lvlIdx] ? ` · ${starStr(stars[lvlIdx])}` : "";
+    if (lvl.k === "laser") statusEl.textContent = (attempts ? `Выстрелов: ${attempts}` : "Нажми и потяни") + best;
+    else if (lvl.k === "mirror") statusEl.textContent = `Зеркал: ${placed.length} из ${lvl.mc} · попыток: ${attempts}` + best;
+    else if (lvl.k === "focus") statusEl.textContent = `Нужно ≥ ${lvl.need}% в мишени` + best;
+    else statusEl.textContent = `Ламп: ${lampsPlaced.length} из ${lvl.lamps} · нужно ≥ ${lvl.need}%` + best;
+  }
+  function resetMirrors() {
+    placed = []; fired = false; lights = []; photons = [];
+    setGeometry(compose(lvlBase, lvl.mir || [], lvl.abs || [])); updateStatus();
   }
   function puzzleTap(start, X, Y) {
-    if (!level || !winCard.hidden) return;
+    if (!lvl || !winCard.hidden) return;
     clearTimeout(puzzleTimer);
-    if (level.kind === "laser") {
-      const [sx, sy] = toS(level.src[0], level.src[1]);
+    if (lvl.k === "laser") {
+      const [sx, sy] = toS(lvl.src[0], lvl.src[1]);
       let dX = X - sx, dY = Y - sy;
       if (Math.hypot(dX, dY) < 8) { dX = start.x - sx; dY = start.y - sy; }
       if (Math.hypot(dX, dY) < 8) { toast("Потяни в сторону, куда стрелять"); return; }
@@ -900,63 +1141,75 @@
       return;
     }
     const [wx, wy] = toW(start.x, start.y);
+    if (lvl.k === "mirror") {
+      const [ex, ey] = toW(X, Y);
+      const m = addMirror(wx, wy, ex, ey, lvl.ml);
+      if (!m) return;
+      placed.push(m); haptic("medium");
+      setGeometry(compose(lvlBase, (lvl.mir || []).concat(placed), lvl.abs || []));
+      updateStatus();
+      if (placed.length >= lvl.mc) fireLaser(lvl.ang);
+      else toast(`Нарисуй ещё ${lvl.mc - placed.length}`);
+      return;
+    }
     if (!inside(shape, wx, wy)) { toast("Лампа должна стоять внутри комнаты"); return; }
-    if (lampsPlaced.length >= level.lamps) { lampsPlaced = []; lights = []; photons = []; clearTrails(); }
+    if ((lvl.t || []).some(([tx, ty, tr]) => Math.hypot(wx - tx, wy - ty) < tr + 0.12)) { toast("Слишком близко к мишени — поставь лампу подальше"); return; }
+    if (lampsPlaced.length >= lvl.lamps) { lampsPlaced = []; lights = []; photons = []; clearTrails(); }
     unlit = null;
     lampsPlaced.push([wx, wy]);
-    const l = { x: wx, y: wy, kind: "lamp", rays: 360, maxB: level.kind === "cover" ? level.maxB : 1 };
+    const l = { x: wx, y: wy, kind: "lamp", rays: 360, maxB: lvl.k === "cover" ? lvl.maxB : 1 };
     lights.push(l); spawn(l); resume(); haptic("light");
     updateStatus();
-    if (lampsPlaced.length < level.lamps) { toast(`Поставь ещё ${level.lamps - lampsPlaced.length}`); return; }
+    if (lampsPlaced.length < lvl.lamps) { toast(`Поставь ещё ${lvl.lamps - lampsPlaced.length}`); return; }
     attempts++;
     let pct, okText, res = null;
-    if (level.kind === "focus") {
-      pct = focusShare(shape, wx, wy, level.target[0], level.target[1], level.target[2], 720);
+    if (lvl.k === "focus") {
+      const [tx, ty, tr] = lvl.t[0];
+      pct = focusShare(shape, wx, wy, tx, ty, tr, 720);
       okText = `В мишень попало ${Math.round(pct)}% лучей.`;
     } else {
-      res = coverage(shape, lampsPlaced, 900, level.maxB);
+      res = coverage(shape, lampsPlaced, 900, lvl.maxB);
       pct = res.pct; okText = `Освещено ${pct.toFixed(1)}% комнаты.`;
     }
     puzzleTimer = setTimeout(() => {
-      if (pct >= level.need) win(okText);
+      if (pct >= lvl.need) win(okText);
       else {
         if (res) unlit = res;
-        toast(level.kind === "focus" ? `В мишени ${Math.round(pct)}% — нужно ${level.need}%` : `Освещено ${pct.toFixed(1)}% — нужно ${level.need}%. Красное — тёмные места`);
+        toast(lvl.k === "focus" ? `В мишени ${Math.round(pct)}% — нужно ${lvl.need}%` : `Освещено ${pct.toFixed(1)}% — нужно ${lvl.need}%. Красное — тёмные места`);
         haptic("error");
       }
     }, 1500);
   }
   function fireLaser(ang) {
-    attempts++; updateStatus(); resume();
-    const [sx, sy] = level.src;
-    lights = [{ x: sx, y: sy, kind: "laser", ang, maxB: level.maxB, exact: true }];
+    attempts++; resume();
+    const [sx, sy] = lvl.src;
+    const r = laserResult(shape, sx, sy, ang, lvl.t, lvl.minB, lvl.maxB);
+    shotSpeed = Math.min(r.win ? r.at : r.total, 40) / 2.5;
+    lights = [{ x: sx, y: sy, kind: "laser", ang, maxB: lvl.maxB, exact: true }];
     photons = []; clearTrails(); spawn(lights[0]); haptic("medium");
-    const pts = tracePath(shape, sx, sy, Math.cos(ang), Math.sin(ang), level.maxB);
-    const [tx, ty, tr] = level.target;
-    let dist = 0, hitAt = -1, firstHitBefore = false;
-    for (let j = 0, seg = 0; j + 3 < pts.length; j += 2, seg++) {
-      const L = Math.hypot(pts[j + 2] - pts[j], pts[j + 3] - pts[j + 1]);
-      const t = segCircle(pts[j], pts[j + 1], pts[j + 2], pts[j + 3], tx, ty, tr);
-      if (t >= 0) { if (seg >= level.minB) { hitAt = dist + t * L; break; } firstHitBefore = true; }
-      dist += L;
-    }
+    if (lvl.k === "mirror") fired = true;
+    updateStatus();
     const sp = speedNow();
-    if (hitAt >= 0) {
-      puzzleTimer = setTimeout(() => win(`Попадание с ${attempts}-й попытки.`), hitAt / sp * 1000 + 150);
+    if (r.win) {
+      puzzleTimer = setTimeout(() => win(`Попадание с ${attempts}-й попытки.`), r.at / sp * 1000 + 150);
     } else {
-      const wait = Math.min(dist / sp, 4.5) * 1000;
+      const wait = Math.min(r.total / sp, 4.5) * 1000;
       puzzleTimer = setTimeout(() => {
-        toast(firstHitBefore && level.minB ? `Попал, но мало отражений — нужно ≥ ${level.minB}` : "Мимо! Попробуй другой угол");
-        haptic("error");
+        let msg = r.hits > 0 && lvl.t.length > 1 ? `Задета ${r.hits} из ${lvl.t.length}. Нужно все сразу` :
+          r.early && lvl.minB ? `Попал, но рано — нужно не меньше ${refl(lvl.minB)}` : "Мимо! Попробуй другой угол";
+        if (lvl.k === "mirror") msg += ". Нажми, чтобы рисовать заново";
+        toast(msg); haptic("error");
       }, wait);
     }
   }
   function win(text) {
-    solved.add(levelIdx); store.set("mirror-solved", [...solved]);
-    document.getElementById("winTitle").textContent = `Уровень ${levelIdx + 1} пройден`;
-    document.getElementById("winText").textContent = text;
-    document.getElementById("winNext").textContent = levelIdx + 1 < LEVELS.length ? "Дальше" : "К уровням";
-    winCard.hidden = false; haptic("success");
+    const s = starsFor(lvl, attempts);
+    stars[lvlIdx] = Math.max(stars[lvlIdx] || 0, s); store.set("mirror-stars-v2", stars);
+    document.getElementById("winTitle").textContent = `Уровень ${lvlIdx + 1} пройден`;
+    document.getElementById("winStars").textContent = starStr(s);
+    document.getElementById("winText").textContent = text + (s < 3 ? " Пройди быстрее, чтобы получить 3 звезды." : "");
+    document.getElementById("winNext").textContent = lvlIdx + 1 < LEVEL_DATA.length ? "Дальше" : "К уровням";
+    winCard.hidden = false; updateStatus(); haptic("success");
   }
 
   // =====================================================================
@@ -968,7 +1221,7 @@
   let hintShown = true;
   function hideHint() { if (hintShown) { hintEl.style.opacity = 0; hintShown = false; } }
   let toastT = 0;
-  function toast(t) { toastEl.textContent = t; toastEl.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => toastEl.style.opacity = 0, 2400); }
+  function toast(t) { toastEl.textContent = t; toastEl.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => toastEl.style.opacity = 0, 2600); }
   function setTitle(name, fact) { document.getElementById("shapeName").textContent = name; document.getElementById("shapeFact").textContent = fact; }
   function setDock(which) {
     document.getElementById("dockFree").hidden = which !== "free";
@@ -999,52 +1252,51 @@
     const ds = document.createElement("span"); ds.textContent = "Нарисовать";
     drawBtn.append(pc, ds); drawBtn.addEventListener("click", enterDraw);
     shapesEl.appendChild(drawBtn);
-    const list = custom ? [custom, ...SHAPES] : SHAPES;
-    for (const s of list) {
+    for (const e of customEntry ? [customEntry, ...CATALOG] : CATALOG) {
       const b = document.createElement("button");
-      b.type = "button"; b.className = "shape"; b.dataset.id = s.id;
-      b.setAttribute("aria-pressed", s === shape ? "true" : "false");
-      const span = document.createElement("span"); span.textContent = s.short;
-      b.append(shapeIcon(s), span);
-      b.addEventListener("click", () => selectShape(s));
+      b.type = "button"; b.className = "shape"; b.dataset.id = e.id;
+      b.setAttribute("aria-pressed", e === entry ? "true" : "false");
+      const span = document.createElement("span"); span.textContent = e.short;
+      b.append(shapeIcon(baseOf(e.id)), span);
+      b.addEventListener("click", () => selectShape(e));
       shapesEl.appendChild(b);
     }
   }
-  function selectShape(s, keepLight) {
-    shape = s; freeShape = s;
-    shapesEl.querySelectorAll(".shape[data-id]").forEach(e => e.setAttribute("aria-pressed", e.dataset.id === s.id ? "true" : "false"));
-    setTitle(s.name, s.fact);
-    if (!keepLight) lights = [{ x: s.light[0], y: s.light[1], kind: "lamp", ang: 0 }];
+  function selectShape(e, keepLight) {
+    entry = e; freeMirrors = []; freeAbs = [];
+    shape = compose(baseOf(e.id), [], []);
+    shapesEl.querySelectorAll(".shape[data-id]").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === e.id ? "true" : "false"));
+    setTitle(e.name, e.fact);
+    if (!keepLight) lights = [{ x: e.light[0], y: e.light[1], kind: "lamp", ang: 0 }];
     resume(); fit(); haptic("select");
   }
 
-  document.getElementById("modes").addEventListener("click", (e) => {
-    const b = e.target.closest("button"); if (!b) return;
-    mode = b.dataset.mode;
-    document.querySelectorAll("#modes button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
-    toast(mode === "lamp" ? "Нажми, чтобы поставить лампу" : "Нажми и потяни, чтобы выбрать направление");
-    haptic("select");
+  const toolsEl = document.getElementById("tools");
+  TOOLS.forEach(([id, label, hint]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "tool"; b.textContent = label; b.dataset.tool = id;
+    b.setAttribute("aria-pressed", id === tool ? "true" : "false");
+    b.addEventListener("click", () => {
+      tool = id;
+      toolsEl.querySelectorAll(".tool").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+      toast(hint); haptic("select");
+    });
+    toolsEl.appendChild(b);
   });
-  document.getElementById("clearBtn").addEventListener("click", () => { lights = []; photons = []; clearTrails(); setAuto(false); });
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    lights = []; photons = []; freeMirrors = []; freeAbs = []; setAuto(false); rebuildFree();
+  });
 
-  function randomInside(s, preferCenter) {
+  function randomInside(s) {
     const [x0, y0, x1, y1] = s.box;
-    if (preferCenter) {
-      let cx = 0, cy = 0; for (const [x, y] of s.outer) { cx += x; cy += y; }
-      cx /= s.outer.length; cy /= s.outer.length;
-      if (inside(s, cx, cy)) return [cx, cy];
-    }
-    for (let i = 0; i < 2000; i++) { const x = x0 + Math.random() * (x1 - x0), y = y0 + Math.random() * (y1 - y0); if (inside(s, x, y)) return [x, y]; }
+    for (let i = 0; i < 3000; i++) { const x = x0 + Math.random() * (x1 - x0), y = y0 + Math.random() * (y1 - y0); if (inside(s, x, y)) return [x, y]; }
     return s.outer[0] || [0, 0];
   }
   function autoStep() {
     autoCount++;
-    if (autoCount % 3 === 0) {
-      const next = SHAPES[(SHAPES.indexOf(shape) + 1) % SHAPES.length];
-      selectShape(next, true);
-    }
+    if (autoCount % 3 === 0) selectShape(CATALOG[(CATALOG.indexOf(entry) + 1) % CATALOG.length], true);
     const [x, y] = randomInside(shape);
-    const kinds = ["lamp", "lamp", "torch", "laser"], kind = kinds[Math.floor(Math.random() * kinds.length)];
+    const kinds = ["lamp", "lamp", "torch", "laser", "prism", "band", "pulse"], kind = kinds[Math.floor(Math.random() * kinds.length)];
     lights = []; photons = []; clearTrails();
     const l = { x, y, kind, ang: Math.random() * TAU }; lights.push(l); spawn(l);
   }
@@ -1052,7 +1304,6 @@
   function setAuto(on) { auto = on; autoTimer = 0; autoBtn.setAttribute("aria-pressed", on ? "true" : "false"); }
   autoBtn.addEventListener("click", () => { setAuto(!auto); if (auto) { hideHint(); resume(); autoStep(); } });
 
-  // Пауза из-за тормозов
   document.getElementById("perfGo").addEventListener("click", () => { resume(); grace = 4; });
   document.getElementById("perfLess").addEventListener("click", () => {
     cfg.rays = Math.max(20, Math.round(cfg.rays / 2 / 10) * 10);
@@ -1061,38 +1312,48 @@
     toast(`Теперь лучей: ${cfg.rays}, отражений: ${cfg.bounces}`);
   });
 
-  // Рисование
-  document.getElementById("drawCancel").addEventListener("click", () => { view = "free"; setDock("free"); selectShape(freeShape); });
+  document.getElementById("drawCancel").addEventListener("click", () => { view = "free"; setDock("free"); selectShape(entry); });
   document.getElementById("drawUndo").addEventListener("click", () => { drawLoops.pop(); drawWalls(); });
   document.getElementById("drawDone").addEventListener("click", finishDraw);
 
-  // Загадки
   document.getElementById("puzzleBtn").addEventListener("click", openLevels);
   document.getElementById("toLevels").addEventListener("click", () => { clearTimeout(puzzleTimer); renderLevels(); levelsPanel.hidden = false; winCard.hidden = true; });
-  document.getElementById("levelReset").addEventListener("click", () => loadLevel(levelIdx));
+  document.getElementById("levelReset").addEventListener("click", () => loadLevel(lvlIdx));
   document.getElementById("levelsBack").addEventListener("click", () => {
-    clearTimeout(puzzleTimer); levelsPanel.hidden = true; level = null; unlit = null;
-    view = "free"; setDock("free"); selectShape(freeShape);
+    clearTimeout(puzzleTimer); levelsPanel.hidden = true; lvl = null; unlit = null;
+    view = "free"; setDock("free"); selectShape(entry);
   });
-  document.getElementById("winAgain").addEventListener("click", () => loadLevel(levelIdx));
+  document.getElementById("winAgain").addEventListener("click", () => loadLevel(lvlIdx));
   document.getElementById("winNext").addEventListener("click", () => {
-    if (levelIdx + 1 < LEVELS.length) loadLevel(levelIdx + 1);
+    if (lvlIdx + 1 < LEVEL_DATA.length) loadLevel(lvlIdx + 1);
     else { winCard.hidden = true; renderLevels(); levelsPanel.hidden = false; }
   });
   function renderLevels() {
-    const grid = document.getElementById("levelGrid"); grid.textContent = "";
-    document.getElementById("levelsSub").textContent = `Решено ${solved.size} из ${LEVELS.length}`;
-    LEVELS.forEach((L, i) => {
-      const b = document.createElement("button"); b.type = "button";
-      b.className = "lvl" + (solved.has(i) ? " done" : "");
-      const n = document.createElement("span"); n.className = "num"; n.textContent = i + 1;
-      const t = document.createElement("span"); t.textContent = L.name;
-      b.append(n, t); b.addEventListener("click", () => loadLevel(i));
-      grid.appendChild(b);
+    const box = document.getElementById("chapters"); box.textContent = "";
+    let total = 0; for (const k in stars) total += stars[k];
+    document.getElementById("starsTotal").textContent = `★ ${total} из ${LEVEL_DATA.length * 3}`;
+    CHAPTERS.forEach((ch, ci) => {
+      const ids = LEVEL_DATA.map((L, i) => [L, i]).filter(([L]) => L.c === ci);
+      if (!ids.length) return;
+      const sec = document.createElement("div"); sec.className = "chapter";
+      const h = document.createElement("h3"); h.textContent = `${ci + 1}. ${ch.name}`;
+      const got = ids.reduce((s, [, i]) => s + (stars[i] || 0), 0);
+      const sp = document.createElement("span"); sp.textContent = `★ ${got}/${ids.length * 3}`; h.appendChild(sp);
+      const p = document.createElement("p"); p.textContent = ch.sub;
+      const grid = document.createElement("div"); grid.className = "levels";
+      for (const [, i] of ids) {
+        const b = document.createElement("button"); b.type = "button";
+        b.className = "lvl" + (stars[i] ? " done" : "");
+        b.setAttribute("aria-label", `Уровень ${i + 1}`);
+        const n = document.createElement("span"); n.textContent = i + 1;
+        const st = document.createElement("span"); st.className = "st"; st.textContent = stars[i] ? "★".repeat(stars[i]) : "";
+        b.append(n, st); b.addEventListener("click", () => loadLevel(i));
+        grid.appendChild(b);
+      }
+      sec.append(h, p, grid); box.appendChild(sec);
     });
   }
 
-  // Настройки
   const sheet = document.getElementById("sheet");
   document.getElementById("setBtn").addEventListener("click", () => { sheet.hidden = false; });
   document.getElementById("closeSheet").addEventListener("click", () => { sheet.hidden = true; });
@@ -1129,12 +1390,15 @@
   bindToggle("fociBtn", "foci", drawWalls);
 
   // Для проверки и отладки
-  window.__mirror = { LEVELS, SHAPES, coverage, focusShare, tracePath, segCircle, inside, castRay, prepare,
-    state: () => ({ view, paused, photons: photons.length, level: levelIdx, solved: [...solved], shape: shape.id, winShown: !winCard.hidden, perfShown: !perfEl.hidden, toast: toastEl.textContent }), pauseAnim, loadLevel, fireLaser, toS };
+  window.__mirror = { LEVEL_DATA, CATALOG, ROOMS, makeRoom, compose, coverage, focusShare, laserResult, tracePath, inside, castRay, segmentClear,
+    state: () => ({ view, paused, photons: photons.length, level: lvlIdx, stars: { ...stars }, shape: entry.id, tool, mirrors: freeMirrors.length, holes: freeAbs.length,
+      lights: lights.map(l => l.kind), winShown: !winCard.hidden, perfShown: !perfEl.hidden, toast: toastEl.textContent, placed: placed.length }),
+    pauseAnim, loadLevel, fireLaser, toS, toW, selectShape };
 
+  shape = compose(baseOf(entry.id), [], []);
   renderChips();
   new ResizeObserver(() => fit()).observe(stage);
-  selectShape(SHAPES[0]);
+  selectShape(CATALOG[0]);
   requestAnimationFrame(frame);
 })();
 </script>
