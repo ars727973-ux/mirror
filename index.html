@@ -100,6 +100,14 @@
   .shape canvas { width: 40px; height: 32px; }
   .shape[aria-pressed="true"] { border-color: var(--light); color: var(--fg); background: rgba(255, 217, 74, 0.08); }
   .shape.draw { border: 1px dashed var(--line); color: var(--fg); }
+  .shape { position: relative; }
+  .shape .x {
+    position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--target); color: #fff; font: 700 0.72rem/20px var(--font); text-align: center;
+  }
+  .shape.confirm { border-color: var(--target); color: var(--target); background: rgba(255, 90, 122, 0.1); }
+  .shape .glyph { width: 40px; height: 32px; display: grid; place-items: center; font-size: 1.15rem; color: var(--fg); }
+  #shapes { padding-top: 7px; }
   .tool {
     flex: none; border: 0; background: var(--chip); color: var(--muted); border-radius: 9px;
     padding: 8px 12px; font: 600 0.82rem var(--font); cursor: pointer;
@@ -248,6 +256,8 @@
       tg.setHeaderColor && tg.setHeaderColor("#040507");
       tg.setBackgroundColor && tg.setBackgroundColor("#040507");
       tg.disableVerticalSwipes && tg.disableVerticalSwipes(); // свайп по комнате не закрывает приложение
+      const sp = tg.initDataUnsafe && tg.initDataUnsafe.start_param;   // ссылка t.me/бот/app?startapp=levels
+      if (sp && !startMode) applyStartMode(sp);
     } catch (e) {}
   }
   if (window.TelegramWebviewProxy || /tgWebApp/.test(location.hash)) {
@@ -255,6 +265,12 @@
     s.src = "https://telegram.org/js/telegram-web-app.js";
     s.onload = initTelegram;
     document.head.appendChild(s);
+  }
+  const startMode = new URLSearchParams(location.search).get("mode");
+  let startApplied = false;
+  function applyStartMode(mode) {
+    if (startApplied) return; startApplied = true;
+    if (mode === "levels") openLevels(); else if (mode === "draw") enterDraw();
   }
   const haptic = (kind) => { try { tg && tg.HapticFeedback && (kind === "select" ? tg.HapticFeedback.selectionChanged()
     : kind === "success" || kind === "error" ? tg.HapticFeedback.notificationOccurred(kind)
@@ -616,14 +632,17 @@
   let freeMirrors = [], freeAbs = [];
   let shape = null, lights = [], photons = [];
   let auto = false, autoTimer = 0, autoCount = 0;
-  let custom = null, customEntry = null;
+  let customs = [];                 // нарисованные комнаты: { id, name, loops, base, entry }
+  const hidden = new Set(store.get("mirror-hidden", []));
+  let editMode = false, confirmId = null;
   let drawLoops = [], stroke = null;
   let lvl = null, lvlIdx = -1, lvlBase = null, attempts = 0, lampsPlaced = [], placed = [], fired = false, unlit = null, puzzleTimer = 0;
   const stars = store.get("mirror-stars-v2", {});
   let paused = false, emaMs = 16, slowFor = 0, grace = 2;
   const MAX_PHOTONS = 5000;
   const baseCache = {};
-  const baseOf = (id) => id === "custom" ? custom : (baseCache[id] || (baseCache[id] = makeRoom(id)));
+  const baseOf = (id) => { const c = customs.find(c => c.id === id); return c ? c.base : (baseCache[id] || (baseCache[id] = makeRoom(id))); };
+  const visibleEntries = () => [...customs.map(c => c.entry), ...CATALOG.filter(e => !hidden.has(e.id))];
 
   // =====================================================================
   //  Холсты
@@ -1039,17 +1058,24 @@
     drawLoops.push(pts); drawWalls(); haptic("light");
     toast(drawLoops.length === 1 ? "Стены готовы. Можешь нарисовать колонны или нажать «Готово»" : "Колонна добавлена");
   }
-  function setCustom(loops) {
-    custom = prepareLoops(loops.map(l => l.map(([x, y]) => P(x, y))), []);
-    customEntry = { id: "custom", name: "Моя комната", short: "Моя", fact: "Эту комнату нарисовал ты. Поставь свет и посмотри, что получится.", light: centerOf(custom) };
+  function makeCustom(id, name, loops) {
+    const base = prepareLoops(loops.map(l => l.map(([x, y]) => P(x, y))), []);
+    const entry = { id, name, short: name.replace("Моя комната", "Моя"), custom: true, light: centerOf(base),
+      fact: "Эту комнату нарисовал ты. Поставь свет и посмотри, что получится." };
+    return { id, name, loops, base, entry };
   }
+  const saveCustoms = () => store.set("mirror-customs", customs.map(c => ({ id: c.id, name: c.name, loops: c.loops })));
   function centerOf(s) {
     let cx = 0, cy = 0; for (const [x, y] of s.outer) { cx += x; cy += y; }
     cx /= s.outer.length; cy /= s.outer.length;
     return inside(s, cx, cy) ? [cx, cy] : randomInside(s);
   }
-  const savedLoops = store.get("mirror-custom", null);
-  if (Array.isArray(savedLoops) && savedLoops.length) { try { setCustom(savedLoops); } catch (e) { custom = null; customEntry = null; } }
+  (() => {
+    let saved = store.get("mirror-customs", null);
+    const old = store.get("mirror-custom", null);     // старая версия хранила одну комнату
+    if (!saved && Array.isArray(old) && old.length) saved = [{ id: "custom1", name: "Моя комната 1", loops: old }];
+    for (const c of saved || []) { try { customs.push(makeCustom(c.id, c.name, c.loops)); } catch (e) {} }
+  })();
 
   function enterDraw() {
     view = "draw"; setAuto(false);
@@ -1060,9 +1086,11 @@
   }
   function finishDraw() {
     if (!drawLoops.length) { toast("Сначала нарисуй стены"); return; }
-    setCustom(drawLoops);
-    store.set("mirror-custom", drawLoops.map(l => l.map(([x, y]) => [+x.toFixed(4), +y.toFixed(4)])));
-    view = "free"; setDock("free"); renderChips(); selectShape(customEntry);
+    if (customs.length >= 20) { toast("Максимум 20 своих комнат — удали лишние через «Изменить»"); return; }
+    let n = 1; while (customs.some(c => c.name === `Моя комната ${n}`)) n++;
+    const c = makeCustom("custom" + Date.now(), `Моя комната ${n}`, drawLoops.map(l => l.map(([x, y]) => [+x.toFixed(4), +y.toFixed(4)])));
+    customs.unshift(c); saveCustoms();
+    view = "free"; setDock("free"); renderChips(); selectShape(c.entry);
     toast("Нажми внутри комнаты, чтобы поставить свет");
   }
 
@@ -1252,15 +1280,40 @@
     const ds = document.createElement("span"); ds.textContent = "Нарисовать";
     drawBtn.append(pc, ds); drawBtn.addEventListener("click", enterDraw);
     shapesEl.appendChild(drawBtn);
-    for (const e of customEntry ? [customEntry, ...CATALOG] : CATALOG) {
+    const glyphChip = (glyph, label, onClick, pressed) => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "shape draw";
+      if (pressed) b.setAttribute("aria-pressed", "true");
+      const g = document.createElement("span"); g.className = "glyph"; g.textContent = glyph;
+      const t = document.createElement("span"); t.textContent = label;
+      b.append(g, t); b.addEventListener("click", onClick); shapesEl.appendChild(b);
+    };
+    glyphChip(editMode ? "✓" : "✕", editMode ? "Готово" : "Изменить", toggleEdit, editMode);
+    if (editMode && hidden.size) glyphChip("↺", "Вернуть все", restoreAll);
+    for (const e of visibleEntries()) {
       const b = document.createElement("button");
-      b.type = "button"; b.className = "shape"; b.dataset.id = e.id;
-      b.setAttribute("aria-pressed", e === entry ? "true" : "false");
-      const span = document.createElement("span"); span.textContent = e.short;
+      b.type = "button"; b.className = "shape" + (editMode && confirmId === e.id ? " confirm" : ""); b.dataset.id = e.id;
+      b.setAttribute("aria-pressed", e.id === entry.id && !editMode ? "true" : "false");
+      const span = document.createElement("span"); span.textContent = editMode && confirmId === e.id ? "Удалить?" : e.short;
       b.append(shapeIcon(baseOf(e.id)), span);
-      b.addEventListener("click", () => selectShape(e));
+      if (editMode) { const x = document.createElement("span"); x.className = "x"; x.textContent = "×"; b.appendChild(x); }
+      b.addEventListener("click", () => editMode ? deleteTap(e) : selectShape(e));
       shapesEl.appendChild(b);
     }
+  }
+  function toggleEdit() {
+    editMode = !editMode; confirmId = null; renderChips(); haptic("select");
+    if (editMode) toast("Нажми на комнату два раза, чтобы удалить. Встроенные можно вернуть.");
+  }
+  function restoreAll() { hidden.clear(); store.set("mirror-hidden", []); confirmId = null; renderChips(); toast("Все комнаты вернулись"); }
+  function deleteTap(e) {
+    if (confirmId !== e.id) { confirmId = e.id; renderChips(); haptic("select"); return; }
+    confirmId = null;
+    if (visibleEntries().length <= 1) { toast("Нельзя удалить последнюю комнату"); renderChips(); return; }
+    if (e.custom) { customs = customs.filter(c => c.id !== e.id); saveCustoms(); toast(`«${e.name}» удалена`); }
+    else { hidden.add(e.id); store.set("mirror-hidden", [...hidden]); toast(`«${e.name}» скрыта. «Вернуть все» покажет её снова`); }
+    haptic("medium");
+    if (entry.id === e.id) selectShape(visibleEntries()[0]);
+    renderChips();
   }
   function selectShape(e, keepLight) {
     entry = e; freeMirrors = []; freeAbs = [];
@@ -1294,7 +1347,7 @@
   }
   function autoStep() {
     autoCount++;
-    if (autoCount % 3 === 0) selectShape(CATALOG[(CATALOG.indexOf(entry) + 1) % CATALOG.length], true);
+    if (autoCount % 3 === 0) { const v = visibleEntries(); selectShape(v[(v.findIndex(e => e.id === entry.id) + 1) % v.length], true); }
     const [x, y] = randomInside(shape);
     const kinds = ["lamp", "lamp", "torch", "laser", "prism", "band", "pulse"], kind = kinds[Math.floor(Math.random() * kinds.length)];
     lights = []; photons = []; clearTrails();
@@ -1392,14 +1445,17 @@
   // Для проверки и отладки
   window.__mirror = { LEVEL_DATA, CATALOG, ROOMS, makeRoom, compose, coverage, focusShare, laserResult, tracePath, inside, castRay, segmentClear,
     state: () => ({ view, paused, photons: photons.length, level: lvlIdx, stars: { ...stars }, shape: entry.id, tool, mirrors: freeMirrors.length, holes: freeAbs.length,
-      lights: lights.map(l => l.kind), winShown: !winCard.hidden, perfShown: !perfEl.hidden, toast: toastEl.textContent, placed: placed.length }),
+      lights: lights.map(l => l.kind), customs: customs.length, hidden: hidden.size, chips: shapesEl.querySelectorAll(".shape[data-id]").length, editMode, winShown: !winCard.hidden, perfShown: !perfEl.hidden, toast: toastEl.textContent, placed: placed.length }),
     pauseAnim, loadLevel, fireLaser, toS, toW, selectShape };
 
+  entry = visibleEntries()[0] || CATALOG[0];
   shape = compose(baseOf(entry.id), [], []);
   renderChips();
   new ResizeObserver(() => fit()).observe(stage);
-  selectShape(CATALOG[0]);
+  selectShape(entry);
   requestAnimationFrame(frame);
+  // Бот может открыть приложение сразу в нужном режиме: ?mode=levels или ?mode=draw
+  if (startMode) setTimeout(() => applyStartMode(startMode), 60);
 })();
 </script>
 
